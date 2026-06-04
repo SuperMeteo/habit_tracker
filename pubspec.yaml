@@ -1,0 +1,52 @@
+name: habit_tracker
+description: "Habit Tracker - Data-driven habit tracking mobile app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.3.5
+
+  # Database (SQLite)
+  drift: ^2.21.0
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Charts & Visualization
+  fl_chart: ^0.69.0
+
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+
+  # Utilities
+  shared_preferences: ^2.3.3
+  intl: ^0.20.2
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code Generation
+  drift_dev: ^2.21.0
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.4.3
+
+flutter:
+  uses-material-design: true
