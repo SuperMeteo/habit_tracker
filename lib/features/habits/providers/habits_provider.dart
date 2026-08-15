@@ -93,9 +93,9 @@ class HabitActions {
   Future<void> updateHabit(HabitsCompanion companion) =>
       _db.updateHabit(companion);
 
-  Future<void> deleteHabit(int id) => _db.deleteHabit(id);
+  Future<void> deleteHabit(String id) => _db.deleteHabit(id);
 
-  Future<void> toggleHabit(int habitId, DateTime date, bool? currentDone) async {
+  Future<void> toggleHabit(String habitId, DateTime date, bool? currentDone) async {
     final existing = await _db.getLogForHabitAndDate(habitId, date);
     if (existing != null) {
       await _db.upsertLog(HabitLogsCompanion(
@@ -114,7 +114,7 @@ class HabitActions {
   }
 
   Future<void> logNumericValue(
-      int habitId, DateTime date, double value) async {
+      String habitId, DateTime date, double value) async {
     final existing = await _db.getLogForHabitAndDate(habitId, date);
     await _db.upsertLog(HabitLogsCompanion(
       id: existing != null ? Value(existing.id) : const Value.absent(),

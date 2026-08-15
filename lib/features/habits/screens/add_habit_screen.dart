@@ -25,7 +25,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   late final TextEditingController _unitCtrl;
   late final TextEditingController _targetValueCtrl;
 
-  int _categoryId = 1;
+  String _categoryId = '';
   String _frequencyType = 'daily';
   List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
   bool _isNumeric = false;
@@ -301,6 +301,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   }
 
   Widget _buildCategoryChips(List<Category> cats) {
+    // default: เลือกหมวดแรกถ้ายังไม่ได้เลือก (id เป็น UUID จึงตั้งค่าเริ่มไม่ได้)
+    if (_categoryId.isEmpty && cats.isNotEmpty) _categoryId = cats.first.id;
     return Wrap(
       spacing: 8,
       children: cats.map((cat) {

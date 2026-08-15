@@ -8,7 +8,8 @@ class MainScaffold extends StatelessWidget {
   int _selectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/analytics')) return 1;
-    if (location.startsWith('/settings')) return 2;
+    if (location.startsWith('/leaderboard')) return 2;
+    if (location.startsWith('/settings')) return 3;
     return 0;
   }
 
@@ -25,6 +26,8 @@ class MainScaffold extends StatelessWidget {
             case 1:
               context.go('/analytics');
             case 2:
+              context.go('/leaderboard');
+            case 3:
               context.go('/settings');
           }
         },
@@ -38,6 +41,11 @@ class MainScaffold extends StatelessWidget {
             icon: Icon(Icons.bar_chart_outlined),
             selectedIcon: Icon(Icons.bar_chart),
             label: 'สถิติ',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.emoji_events_outlined),
+            selectedIcon: Icon(Icons.emoji_events),
+            label: 'อันดับ',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

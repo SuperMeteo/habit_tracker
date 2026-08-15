@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secret / local dev scripts (contains Supabase keys)
+run_dev.ps1
+run_dev.sh
+.env
+.env.local
