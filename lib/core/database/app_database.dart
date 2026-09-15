@@ -105,6 +105,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Habit>> getAllHabits() => select(habits).get();
 
+  Future<Habit?> getHabit(int id) =>
+      (select(habits)..where((h) => h.id.equals(id))).getSingleOrNull();
+
   Future<List<HabitLog>> getAllLogs() => select(habitLogs).get();
 
   Future<List<Habit>> getActiveHabits() =>

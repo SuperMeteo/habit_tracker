@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/streak_calculator.dart';
+import '../../../core/services/notification_service.dart';
 
 // ─── Database provider ─────────────────────────────────────────────────────
 
@@ -116,13 +117,29 @@ class HabitActions {
   final AppDatabase _db;
   HabitActions(this._db);
 
-  Future<void> addHabit(HabitsCompanion companion) =>
-      _db.insertHabit(companion);
+  Future<void> addHabit(HabitsCompanion companion) async {
+    final id = await _db.insertHabit(companion);
+    await _syncReminder(id);
+  }
 
-  Future<void> updateHabit(HabitsCompanion companion) =>
-      _db.updateHabit(companion);
+  Future<void> updateHabit(HabitsCompanion companion) async {
+    await _db.updateHabit(companion);
+    await _syncReminder(companion.id.value);
+  }
 
-  Future<void> deleteHabit(int id) => _db.deleteHabit(id);
+  Future<void> deleteHabit(int id) async {
+    await _db.deleteHabit(id);
+    await NotificationService.instance.cancelForHabit(id);
+  }
+
+  Future<void> _syncReminder(int id) async {
+    final habit = await _db.getHabit(id);
+    if (habit == null) {
+      await NotificationService.instance.cancelForHabit(id);
+    } else {
+      await NotificationService.instance.scheduleForHabit(habit);
+    }
+  }
 
   Future<void> toggleHabit(int habitId, DateTime date, bool? currentDone) async {
     final existing = await _db.getLogForHabitAndDate(habitId, date);

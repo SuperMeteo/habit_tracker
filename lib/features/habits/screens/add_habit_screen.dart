@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/notification_service.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../models/habit_icons.dart';
 import '../models/habit_templates.dart';
@@ -421,6 +422,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       title: Text(_reminderTime == null
           ? 'ไม่มีการแจ้งเตือน'
           : 'แจ้งเตือนเวลา ${_reminderTime!.format(context)}'),
+      subtitle: NotificationService.isSupported
+          ? null
+          : const Text('แจ้งเตือนใช้ได้บนแอป Android'),
       trailing: _reminderTime != null
           ? IconButton(
               icon: const Icon(Icons.clear),
@@ -432,7 +436,14 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
           context: context,
           initialTime: _reminderTime ?? TimeOfDay.now(),
         );
-        if (picked != null) setState(() => _reminderTime = picked);
+        if (picked == null) return;
+        setState(() => _reminderTime = picked);
+        if (!NotificationService.isSupported) return;
+        final granted = await NotificationService.instance.requestPermission();
+        if (!granted && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('ยังไม่ได้อนุญาตการแจ้งเตือนในเครื่อง')));
+        }
       },
     );
   }
