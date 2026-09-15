@@ -17,6 +17,7 @@ class HabitCard extends StatelessWidget {
 
   bool get _isNumeric => item.habit.targetValue != null;
   bool get _isDone => item.log?.isDone ?? false;
+  bool get _isWeekly => item.habit.frequencyType == 'times_per_week';
   double get _progress {
     if (!_isNumeric) return _isDone ? 1.0 : 0.0;
     final val = item.log?.value ?? 0;
@@ -104,7 +105,25 @@ class HabitCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+        if (_isWeekly) ...[
+          const SizedBox(height: 2),
+          _buildWeeklyCount(theme),
+        ],
       ],
+    );
+  }
+
+  Widget _buildWeeklyCount(ThemeData theme) {
+    final goal = item.habit.timesPerWeek;
+    final reached = item.weekDoneCount >= goal;
+    return Text(
+      'ทำแล้ว ${item.weekDoneCount} / $goal ครั้งในสัปดาห์',
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: reached
+            ? AppTheme.parseHex(item.habit.colorHex)
+            : theme.colorScheme.outline,
+        fontWeight: reached ? FontWeight.bold : null,
+      ),
     );
   }
 

@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/streak_calculator.dart';
 
 // ─── Database provider ─────────────────────────────────────────────────────
 
@@ -35,31 +37,54 @@ final logsForDateProvider = StreamProvider<List<HabitLog>>((ref) {
   return ref.watch(databaseProvider).watchLogsForDate(date);
 });
 
+final logsForSelectedWeekProvider = StreamProvider<List<HabitLog>>((ref) {
+  final weekStart = ref.watch(
+      selectedDateProvider.select((d) => HabitDateUtils.startOfWeek(d)));
+  return ref
+      .watch(databaseProvider)
+      .watchLogsForDateRange(weekStart, weekStart.add(const Duration(days: 7)));
+});
+
 // ─── Combined habit + log for dashboard ───────────────────────────────────
 
 class HabitWithLog {
   final Habit habit;
   final HabitLog? log;
-  const HabitWithLog({required this.habit, this.log});
+  final int weekDoneCount;
+  const HabitWithLog({required this.habit, this.log, this.weekDoneCount = 0});
 }
 
 final dashboardProvider = Provider<AsyncValue<List<HabitWithLog>>>((ref) {
   final habitsAsync = ref.watch(habitsProvider);
   final logsAsync = ref.watch(logsForDateProvider);
+  final weekLogsAsync = ref.watch(logsForSelectedWeekProvider);
   final date = ref.watch(selectedDateProvider);
+  final weekStart = HabitDateUtils.startOfWeek(date);
 
   return habitsAsync.when(
     data: (habits) => logsAsync.when(
-      data: (logs) {
-        final activeHabits = habits.where((h) => _isTargetDay(h, date)).toList();
-        return AsyncData(activeHabits.map((habit) {
-          final log = logs.cast<HabitLog?>().firstWhere(
-            (l) => l?.habitId == habit.id,
-            orElse: () => null,
-          );
-          return HabitWithLog(habit: habit, log: log);
-        }).toList());
-      },
+      data: (logs) => weekLogsAsync.when(
+        data: (weekLogs) {
+          final activeHabits =
+              habits.where((h) => _isTargetDay(h, date)).toList();
+          return AsyncData(activeHabits.map((habit) {
+            final log = logs.cast<HabitLog?>().firstWhere(
+              (l) => l?.habitId == habit.id,
+              orElse: () => null,
+            );
+            final weekDoneCount = habit.frequencyType == 'times_per_week'
+                ? StreakCalculator.weeklyDoneCount(
+                    logs: weekLogs.where((l) => l.habitId == habit.id).toList(),
+                    weekStart: weekStart,
+                  )
+                : 0;
+            return HabitWithLog(
+                habit: habit, log: log, weekDoneCount: weekDoneCount);
+          }).toList());
+        },
+        loading: () => const AsyncLoading(),
+        error: (e, s) => AsyncError(e, s),
+      ),
       loading: () => const AsyncLoading(),
       error: (e, s) => AsyncError(e, s),
     ),

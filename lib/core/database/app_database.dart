@@ -96,6 +96,15 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Stream<List<HabitLog>> watchLogsForDateRange(
+      DateTime start, DateTime end) {
+    return (select(habitLogs)
+          ..where((l) =>
+              l.loggedDate.isBiggerOrEqualValue(start) &
+              l.loggedDate.isSmallerThanValue(end)))
+        .watch();
+  }
+
   Future<HabitLog?> getLogForHabitAndDate(
       int habitId, DateTime date) async {
     final dayStart = DateTime(date.year, date.month, date.day);

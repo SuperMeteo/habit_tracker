@@ -1,11 +1,13 @@
 import 'dart:convert';
 import '../../core/database/app_database.dart';
+import 'date_utils.dart';
 
 class StreakCalculator {
   /// คำนวณ current streak และ longest streak ของ habit
   static Map<String, int> calculate({
     required Habit habit,
     required List<HabitLog> logs,
+    DateTime? now,
   }) {
     if (logs.isEmpty) return {'current': 0, 'longest': 0};
 
@@ -14,8 +16,13 @@ class StreakCalculator {
         .map((l) => _normalizeDate(l.loggedDate))
         .toSet();
 
+    final today = _normalizeDate(now ?? DateTime.now());
+
+    if (habit.frequencyType == 'times_per_week') {
+      return _weeklyStreak(doneDates, _weeklyGoal(habit), today);
+    }
+
     final targetDaysList = _parseTargetDays(habit.targetDays);
-    final today = _normalizeDate(DateTime.now());
 
     int current = 0;
     int longest = 0;
@@ -49,12 +56,65 @@ class StreakCalculator {
     return {'current': current, 'longest': longest};
   }
 
+  static Map<String, int> _weeklyStreak(
+      Set<DateTime> doneDates, int goal, DateTime today) {
+    int current = 0;
+    int longest = 0;
+    int streak = 0;
+    bool counting = true;
+
+    DateTime weekStart = HabitDateUtils.startOfWeek(today);
+    for (int i = 0; i < 53; i++) {
+      final count = _countDatesInWeek(doneDates, weekStart);
+      if (count >= goal) {
+        streak++;
+        if (counting) current = streak;
+        longest = streak > longest ? streak : longest;
+      } else if (i > 0) {
+        counting = false;
+        streak = 0;
+      }
+      weekStart =
+          DateTime(weekStart.year, weekStart.month, weekStart.day - 7);
+    }
+    return {'current': current, 'longest': longest};
+  }
+
+  static int weeklyDoneCount({
+    required List<HabitLog> logs,
+    required DateTime weekStart,
+  }) {
+    final doneDates = logs
+        .where((l) => l.isDone)
+        .map((l) => _normalizeDate(l.loggedDate))
+        .toSet();
+    return _countDatesInWeek(doneDates, _normalizeDate(weekStart));
+  }
+
+  static int _countDatesInWeek(Set<DateTime> doneDates, DateTime weekStart) {
+    int count = 0;
+    for (int d = 0; d < 7; d++) {
+      final day = DateTime(weekStart.year, weekStart.month, weekStart.day + d);
+      if (doneDates.contains(day)) count++;
+    }
+    return count;
+  }
+
+  static int _weeklyGoal(Habit habit) =>
+      habit.timesPerWeek < 1 ? 1 : habit.timesPerWeek;
+
   /// completion rate รายสัปดาห์ (0.0 - 1.0)
   static double weeklyCompletionRate({
     required Habit habit,
     required List<HabitLog> logsThisWeek,
     required DateTime weekStart,
   }) {
+    if (habit.frequencyType == 'times_per_week') {
+      final goal = _weeklyGoal(habit);
+      final done = weeklyDoneCount(logs: logsThisWeek, weekStart: weekStart);
+      return (done >= goal ? goal : done) / goal;
+    }
+
     final targetDaysList = _parseTargetDays(habit.targetDays);
     int targetCount = 0;
     int doneCount = 0;

@@ -11,6 +11,8 @@ class StreakCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = AppTheme.parseHex(stats.habit.colorHex);
+    final unit =
+        stats.habit.frequencyType == 'times_per_week' ? 'สัปดาห์' : 'วัน';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -46,13 +48,13 @@ class StreakCard extends StatelessWidget {
               children: [
                 _StatChip(
                     label: 'streak ปัจจุบัน',
-                    value: '${stats.currentStreak} วัน',
+                    value: '${stats.currentStreak} $unit',
                     icon: Icons.local_fire_department,
                     color: Colors.orange),
                 const SizedBox(width: 8),
                 _StatChip(
                     label: 'ยาวที่สุด',
-                    value: '${stats.longestStreak} วัน',
+                    value: '${stats.longestStreak} $unit',
                     icon: Icons.emoji_events,
                     color: Colors.amber),
                 const SizedBox(width: 8),

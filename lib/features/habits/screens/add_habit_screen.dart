@@ -28,6 +28,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   int _categoryId = 1;
   String _frequencyType = 'daily';
   List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
+  int _timesPerWeek = 3;
   bool _isNumeric = false;
   String _colorHex = '#6366F1';
   int _iconCode = HabitIcons.defaultCode;
@@ -51,6 +52,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       _categoryId = h.categoryId;
       _frequencyType = h.frequencyType;
       _targetDays = List<int>.from(jsonDecode(h.targetDays));
+      _timesPerWeek = h.timesPerWeek.clamp(1, 7);
       _isNumeric = h.targetValue != null;
       _colorHex = h.colorHex;
       _iconCode = h.iconCode;
@@ -163,6 +165,10 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
             if (_frequencyType == 'specific_days') ...[
               const SizedBox(height: 12),
               _buildDaySelector(),
+            ],
+            if (_frequencyType == 'times_per_week') ...[
+              const SizedBox(height: 12),
+              _buildTimesPerWeekStepper(),
             ],
             const SizedBox(height: 20),
             _buildNumericToggle(),
@@ -364,6 +370,35 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     );
   }
 
+  Widget _buildTimesPerWeekStepper() {
+    return Row(
+      children: [
+        IconButton.outlined(
+          icon: const Icon(Icons.remove),
+          onPressed: _timesPerWeek > 1
+              ? () => setState(() => _timesPerWeek--)
+              : null,
+        ),
+        Expanded(
+          child: Text(
+            '$_timesPerWeek ครั้ง / สัปดาห์',
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        IconButton.outlined(
+          icon: const Icon(Icons.add),
+          onPressed: _timesPerWeek < 7
+              ? () => setState(() => _timesPerWeek++)
+              : null,
+        ),
+      ],
+    );
+  }
+
   Widget _buildNumericToggle() {
     return SwitchListTile(
       title: const Text('ติดตามค่าตัวเลข'),
@@ -410,7 +445,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_targetDays.isEmpty) {
+    if (_frequencyType == 'specific_days' && _targetDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('กรุณาเลือกอย่างน้อย 1 วัน')));
       return;
@@ -425,6 +460,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       description: Value(_descCtrl.text.trim()),
       frequencyType: Value(_frequencyType),
       targetDays: Value(jsonEncode(_targetDays)),
+      timesPerWeek: Value(_timesPerWeek),
       targetValue: Value(_isNumeric ? double.tryParse(_targetValueCtrl.text) : null),
       unit: Value(_isNumeric ? _unitCtrl.text.trim() : null),
       reminderTime: Value(_reminderTime != null

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_theme.dart';
 import '../models/habit_icons.dart';
 import '../providers/habits_provider.dart';
@@ -41,7 +42,7 @@ class ManageHabitsScreen extends ConsumerWidget {
                       color: color, size: 20),
                 ),
                 title: Text(habit.name),
-                subtitle: Text(_frequencyLabel(habit.frequencyType)),
+                subtitle: Text(_frequencyLabel(habit)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/habits/edit', extra: habit),
               );
@@ -58,16 +59,16 @@ class ManageHabitsScreen extends ConsumerWidget {
     );
   }
 
-  String _frequencyLabel(String type) {
-    switch (type) {
+  String _frequencyLabel(Habit habit) {
+    switch (habit.frequencyType) {
       case 'daily':
         return 'ทุกวัน';
       case 'specific_days':
         return 'เลือกวัน';
       case 'times_per_week':
-        return 'ต่อสัปดาห์';
+        return '${habit.timesPerWeek} ครั้ง/สัปดาห์';
       default:
-        return type;
+        return habit.frequencyType;
     }
   }
 }
