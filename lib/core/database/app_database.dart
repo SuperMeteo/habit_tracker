@@ -10,6 +10,8 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(openConnection());
 
+  AppDatabase.forTesting(super.executor);
+
   @override
   int get schemaVersion => 1;
 
@@ -56,6 +58,45 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Category>> getAllCategories() =>
       select(categories).get();
+
+  Future<int> insertCategory(String name, String colorHex) => into(categories)
+      .insert(CategoriesCompanion(name: Value(name), colorHex: Value(colorHex)));
+
+  Future<int> updateCategory(int id, String name, String colorHex) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+          CategoriesCompanion(name: Value(name), colorHex: Value(colorHex)));
+
+  Future<CategoryDeleteResult> deleteCategory(int id) {
+    return transaction(() async {
+      if (await countHabitsInCategory(id) > 0) {
+        return CategoryDeleteResult.inUse;
+      }
+      if ((await getAllCategories()).length <= 1) {
+        return CategoryDeleteResult.lastOne;
+      }
+      await (delete(categories)..where((c) => c.id.equals(id))).go();
+      return CategoryDeleteResult.deleted;
+    });
+  }
+
+  Future<int> countHabitsInCategory(int categoryId) {
+    final count = habits.id.count();
+    return (selectOnly(habits)
+          ..addColumns([count])
+          ..where(habits.categoryId.equals(categoryId)))
+        .map((r) => r.read(count) ?? 0)
+        .getSingle();
+  }
+
+  Stream<Map<int, int>> watchHabitCountsByCategory() {
+    final count = habits.id.count();
+    return (selectOnly(habits)
+          ..addColumns([habits.categoryId, count])
+          ..groupBy([habits.categoryId]))
+        .map((r) => MapEntry(r.read(habits.categoryId)!, r.read(count) ?? 0))
+        .watch()
+        .map(Map.fromEntries);
+  }
 
   // ─── Habits ───────────────────────────────────────────────────────────────
 
@@ -130,3 +171,5 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(l) => OrderingTerm.asc(l.loggedDate)]))
           .get();
 }
+
+enum CategoryDeleteResult { deleted, inUse, lastOne }

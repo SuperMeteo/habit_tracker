@@ -306,11 +306,16 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     );
   }
 
+  int _effectiveCategoryId(List<Category> cats) =>
+      cats.isEmpty || cats.any((c) => c.id == _categoryId)
+          ? _categoryId
+          : cats.first.id;
+
   Widget _buildCategoryChips(List<Category> cats) {
     return Wrap(
       spacing: 8,
       children: cats.map((cat) {
-        final selected = cat.id == _categoryId;
+        final selected = cat.id == _effectiveCategoryId(cats);
         final color = AppTheme.parseHex(cat.colorHex);
         return FilterChip(
           label: Text(cat.name),
@@ -455,7 +460,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       id: widget.existingHabit != null
           ? Value(widget.existingHabit!.id)
           : const Value.absent(),
-      categoryId: Value(_categoryId),
+      categoryId: Value(_effectiveCategoryId(
+          ref.read(categoriesProvider).valueOrNull ?? const <Category>[])),
       name: Value(_nameCtrl.text.trim()),
       description: Value(_descCtrl.text.trim()),
       frequencyType: Value(_frequencyType),

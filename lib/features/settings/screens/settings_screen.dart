@@ -68,6 +68,12 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/habits/manage'),
           ),
+          ListTile(
+            leading: const Icon(Icons.category_outlined),
+            title: const Text('จัดการหมวดหมู่'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/categories/manage'),
+          ),
           const Divider(),
           _SectionHeader(label: 'เกี่ยวกับ'),
           ListTile(

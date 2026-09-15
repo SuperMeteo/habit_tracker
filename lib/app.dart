@@ -8,6 +8,7 @@ import 'features/analytics/screens/analytics_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/habits/screens/add_habit_screen.dart';
 import 'features/habits/screens/manage_habits_screen.dart';
+import 'features/habits/screens/manage_categories_screen.dart';
 import 'shared/widgets/bottom_nav.dart';
 import 'core/database/app_database.dart';
 
@@ -44,6 +45,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/habits/manage',
       builder: (_, __) => const ManageHabitsScreen(),
+    ),
+    GoRoute(
+      path: '/categories/manage',
+      builder: (_, __) => const ManageCategoriesScreen(),
     ),
   ],
 );

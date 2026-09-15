@@ -19,6 +19,10 @@ final categoriesProvider = StreamProvider<List<Category>>((ref) {
   return ref.watch(databaseProvider).watchAllCategories();
 });
 
+final categoryHabitCountsProvider = StreamProvider<Map<int, int>>((ref) {
+  return ref.watch(databaseProvider).watchHabitCountsByCategory();
+});
+
 // ─── Active habits ─────────────────────────────────────────────────────────
 
 final habitsProvider = StreamProvider<List<Habit>>((ref) {
