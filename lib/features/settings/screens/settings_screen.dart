@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/export_sheet.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
@@ -73,6 +74,14 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('จัดการหมวดหมู่'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/categories/manage'),
+          ),
+          const Divider(),
+          _SectionHeader(label: 'ข้อมูล'),
+          ListTile(
+            leading: const Icon(Icons.ios_share),
+            title: const Text('ส่งออกข้อมูล'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => showExportSheet(context, ref),
           ),
           const Divider(),
           _SectionHeader(label: 'เกี่ยวกับ'),

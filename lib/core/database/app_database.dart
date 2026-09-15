@@ -103,6 +103,10 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Habit>> watchActiveHabits() =>
       (select(habits)..where((h) => h.isActive.equals(true))).watch();
 
+  Future<List<Habit>> getAllHabits() => select(habits).get();
+
+  Future<List<HabitLog>> getAllLogs() => select(habitLogs).get();
+
   Future<List<Habit>> getActiveHabits() =>
       (select(habits)..where((h) => h.isActive.equals(true))).get();
 
