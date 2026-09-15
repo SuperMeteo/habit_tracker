@@ -20,6 +20,7 @@ class StreakCalculator {
     int current = 0;
     int longest = 0;
     int streak = 0;
+    bool counting = true;
 
     // วนย้อนหลังจากวันนี้
     DateTime cursor = today;
@@ -32,7 +33,7 @@ class StreakCalculator {
 
       if (doneDates.contains(cursor)) {
         streak++;
-        if (i == 0 || current > 0) current = streak;
+        if (counting) current = streak;
         longest = streak > longest ? streak : longest;
       } else {
         // วันแรก (วันนี้) ยังไม่ได้ log ก็ยังไม่ถือว่าขาด
@@ -40,13 +41,11 @@ class StreakCalculator {
           cursor = cursor.subtract(const Duration(days: 1));
           continue;
         }
-        if (current == 0) current = streak;
+        counting = false;
         streak = 0;
       }
       cursor = cursor.subtract(const Duration(days: 1));
     }
-    if (current == 0) current = streak;
-    longest = streak > longest ? streak : longest;
     return {'current': current, 'longest': longest};
   }
 

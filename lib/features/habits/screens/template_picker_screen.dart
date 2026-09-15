@@ -257,7 +257,7 @@ class _CustomTemplateFormState extends State<_CustomTemplateForm> {
                   ? double.tryParse(_targetCtrl.text)
                   : null,
               unit: _isNumeric ? _unitCtrl.text.trim() : null,
-              iconCode: Icons.star.codePoint,
+              icon: Icons.star,
               colorHex: _colorHex,
             );
             Navigator.pop(context, template);

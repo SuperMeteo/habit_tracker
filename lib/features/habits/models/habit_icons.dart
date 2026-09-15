@@ -29,6 +29,12 @@ class HabitIcons {
     Icons.laptop,
     Icons.timer,
     Icons.checklist,
+    Icons.pool,
+    Icons.monitor_weight,
+    Icons.eco,
+    Icons.no_food,
+    Icons.edit_note,
+    Icons.headphones,
     Icons.star,
   ];
 
