@@ -152,15 +152,28 @@ lib/
 ├── main.dart              ← จุดเริ่มต้นแอป
 ├── app.dart               ← ตั้งค่า theme + navigation
 ├── core/
-│   ├── database/          ← ฐานข้อมูล SQLite
+│   ├── database/          ← ฐานข้อมูล SQLite (drift) — habits, categories, habit_logs
 │   ├── theme/             ← สี, ฟอนต์, ธีม
-│   └── utils/             ← เครื่องมือต่างๆ
+│   ├── services/          ← notification_service.dart (แจ้งเตือนตามเวลา)
+│   └── utils/             ← date_utils, streak_calculator, data_exporter (CSV/JSON)
 └── features/
-    ├── dashboard/         ← หน้าหลัก (เช็ค habit)
-    ├── habits/            ← เพิ่ม/แก้ไข habit
-    ├── analytics/         ← กราฟและสถิติ
-    └── settings/          ← ตั้งค่าแอป
+    ├── dashboard/         ← หน้าหลัก (เช็ค habit รายวัน)
+    ├── habits/            ← เพิ่ม/แก้ไข habit, เลือก template/icon, จัดการหมวดหมู่
+    ├── analytics/         ← กราฟรายสัปดาห์, calendar heatmap, streak card
+    └── settings/          ← ตั้งค่าแอป, ส่งออกข้อมูล (export_sheet.dart)
 ```
+
+## ฟีเจอร์ที่ทำเสร็จแล้ว
+
+- ติ๊กเช็ค habit รายวัน + คำนวณ Streak
+- ตั้งความถี่แบบ "N ครั้งต่อสัปดาห์"
+- จัดการหมวดหมู่ (เพิ่ม/แก้ไข/ลบ)
+- กราฟสถิติ + calendar heatmap ในหน้า Analytics
+- ส่งออกข้อมูลเป็น CSV / JSON จากหน้าตั้งค่า (ใช้ share_plus)
+- แจ้งเตือนตามเวลาที่ตั้งใน habit (flutter_local_notifications + flutter_timezone) — ทดสอบใช้งานได้จริงบน Android
+- ชุดทดสอบอัตโนมัติ (`flutter test`) ครอบคลุม การ์ด habit และ Streak รายวัน/เลือกวัน
+
+ที่ยังไม่ได้ทำ: ไอคอนแอป (ยังใช้ของ default) และ `applicationId` ยังเป็น `com.example` · ยังไม่ทดลองกับผู้ใช้จริง
 
 ---
 
