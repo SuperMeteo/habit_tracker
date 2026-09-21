@@ -7,6 +7,7 @@ import '../../data/datasources/remote/habit_remote_ds.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../features/habits/providers/habits_provider.dart';
 import '../database/app_database.dart';
+import '../utils/error_messages.dart';
 import '../supabase/supabase_client_provider.dart';
 
 /// สถานะการ sync สำหรับโชว์บน UI
@@ -85,7 +86,7 @@ class SyncService extends StateNotifier<SyncState> {
       state = SyncState(status: SyncStatus.success, lastSyncAt: now);
       await _ref.read(appUserProvider.notifier).refresh();
     } catch (e) {
-      state = state.copyWith(status: SyncStatus.failed, message: '$e');
+      state = state.copyWith(status: SyncStatus.failed, message: friendlyError(e));
     } finally {
       _running = false;
       if (_needsAnotherRound) {

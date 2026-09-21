@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../data/datasources/remote/auth_remote_ds.dart';
 import '../../../data/repositories/auth_repository.dart';
 
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           .signIn(_emailCtrl.text.trim(), _passCtrl.text);
       if (mounted) context.go('/');
     } catch (e) {
-      _showError(e.toString());
+      _showError(friendlyError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -76,7 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       _showInfo(e.toString());
       _tab.animateTo(0); // สลับไปแท็บเข้าสู่ระบบให้เลย
     } catch (e) {
-      _showError(e.toString());
+      _showError(friendlyError(e));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

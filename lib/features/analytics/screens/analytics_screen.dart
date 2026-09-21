@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/error_messages.dart';
 import '../providers/analytics_provider.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/calendar_heatmap.dart';
@@ -111,7 +112,11 @@ class AnalyticsScreen extends ConsumerWidget {
             loading: () => const SliverToBoxAdapter(
                 child: Center(child: CircularProgressIndicator())),
             error: (e, _) =>
-                SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+                SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(friendlyError(e), textAlign: TextAlign.center),
+                    )),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],

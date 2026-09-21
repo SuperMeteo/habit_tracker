@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../data/models/admin_user_row.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -122,7 +123,7 @@ class AdminScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('ปรับแต้มไม่สำเร็จ: $e'),
+          content: Text('ปรับแต้มไม่สำเร็จ — ${friendlyError(e)}'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ));
       }

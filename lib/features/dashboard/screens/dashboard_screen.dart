@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_card.dart';
@@ -56,7 +57,12 @@ class DashboardScreen extends ConsumerWidget {
                 padding: EdgeInsets.only(top: 64),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(friendlyError(e), textAlign: TextAlign.center),
+                ),
+              ),
             ),
           ),
         ],

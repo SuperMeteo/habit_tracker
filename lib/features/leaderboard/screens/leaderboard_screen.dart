@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/error_messages.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../data/models/leaderboard_entry.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -93,7 +94,7 @@ class LeaderboardScreen extends ConsumerWidget {
               error: (e, _) => EmptyState(
                 icon: Icons.error_outline,
                 title: 'โหลดอันดับไม่สำเร็จ',
-                subtitle: '$e',
+                subtitle: friendlyError(e),
                 action: FilledButton.icon(
                   onPressed: () => ref.invalidate(leaderboardProvider),
                   icon: const Icon(Icons.refresh),
