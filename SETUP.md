@@ -1,180 +1,394 @@
-# 📱 Habit Tracker — คู่มือติดตั้งสำหรับเพื่อน
+# 📱 Habit Tracker — คู่มือติดตั้งและใช้งานฉบับสมบูรณ์
 
-## สิ่งที่ต้องติดตั้งก่อน (ทำครั้งเดียว)
+แอปบันทึกพฤติกรรมประจำวัน (habit) ทำงานแบบออฟไลน์ ไม่ต้องสมัครสมาชิก ไม่ต้องต่อเน็ต
+เขียนด้วย Flutter · เก็บข้อมูลในเครื่องด้วย SQLite · ใช้ได้ทั้งบน Android และบนเบราว์เซอร์
 
-### 1. Flutter SDK
-- ดาวน์โหลดที่ → https://docs.flutter.dev/get-started/install/windows
-- เลือก **Windows** → ดาวน์โหลด Flutter SDK (zip)
-- แตกไฟล์ไปที่ `C:\flutter`
-- เพิ่ม `C:\flutter\bin` ใน Environment Variables > PATH
+---
 
-ตรวจสอบว่าติดตั้งสำเร็จ:
+## สารบัญ
+
+1. [แอปทำอะไรได้บ้าง](#1-แอปทำอะไรได้บ้าง)
+2. [สิ่งที่ต้องติดตั้งก่อน](#2-สิ่งที่ต้องติดตั้งก่อน-ทำครั้งเดียว)
+3. [รับโค้ดมาลงเครื่อง](#3-รับโค้ดมาลงเครื่อง)
+4. [ติดตั้งและรันครั้งแรก](#4-ติดตั้งและรันครั้งแรก)
+5. [รันบนมือถือจริง + ติดตั้ง APK](#5-รันบนมือถือจริง--ติดตั้ง-apk)
+6. [รันบนเบราว์เซอร์](#6-รันบนเบราว์เซอร์-ไม่ต้องมี-android)
+7. [คำสั่งที่ใช้บ่อย](#7-คำสั่งที่ใช้บ่อย)
+8. [ตรวจว่าโค้ดยังดีอยู่](#8-ตรวจว่าโค้ดยังดีอยู่-analyze--test)
+9. [โครงสร้างโปรเจกต์](#9-โครงสร้างโปรเจกต์)
+10. [ฐานข้อมูลและ package ที่ใช้](#10-ฐานข้อมูลและ-package-ที่ใช้)
+11. [เอกสารและสไลด์ใน docs/](#11-เอกสารและสไลด์ใน-docs)
+12. [ปัญหาที่พบบ่อยและวิธีแก้](#12-ปัญหาที่พบบ่อยและวิธีแก้)
+13. [ข้อจำกัดที่รู้อยู่ / งานที่ยังเหลือ](#13-ข้อจำกัดที่รู้อยู่--งานที่ยังเหลือ)
+14. [Git และสาขาในโปรเจกต์นี้](#14-git-และสาขาในโปรเจกต์นี้)
+
+---
+
+## 1. แอปทำอะไรได้บ้าง
+
+| ฟังก์ชัน | รายละเอียด |
+|---|---|
+| บันทึกพฤติกรรมรายวัน | กดติ๊ก ทำ/ไม่ทำ หรือกรอกค่าตัวเลข (เช่น ดื่มน้ำ 6 จาก 8 แก้ว) |
+| ความถี่ 3 แบบ | ทุกวัน · เลือกวัน (จ/พ/ศ) · N ครั้งต่อสัปดาห์ (เลือกได้ 1–7 ครั้ง) |
+| Streak | จำนวนวันที่ทำต่อเนื่อง · ถ้าเป็นแบบ N ครั้งต่อสัปดาห์ จะนับเป็น "สัปดาห์ที่ทำครบเป้าติดกัน" |
+| สถิติ | อัตราสำเร็จรายสัปดาห์ · ปฏิทินความถี่ย้อนหลัง 1 ปี · กราฟแท่งของ habit เชิงตัวเลข |
+| แม่แบบสำเร็จรูป | 18 รายการ 3 หมวด กดเลือกแล้วแก้ต่อได้ |
+| หมวดหมู่ | เพิ่ม / แก้ไข / ลบ (ลบไม่ได้ถ้ายังมี habit ใช้อยู่ และต้องเหลืออย่างน้อย 1 หมวด) |
+| ส่งออกข้อมูล | CSV (เปิดใน Excel) หรือ JSON (สำรองข้อมูลทั้งหมด) จากหน้าตั้งค่า |
+| แจ้งเตือน | ตั้งเวลาเตือนในแต่ละ habit — **ใช้ได้เฉพาะบน Android** |
+| ธีม | สว่าง / มืด / ตามระบบ จำค่าไว้หลังปิดแอป |
+
+ข้อมูลทั้งหมดเก็บอยู่ในเครื่องผู้ใช้เท่านั้น ไม่มีการส่งขึ้นเซิร์ฟเวอร์
+
+---
+
+## 2. สิ่งที่ต้องติดตั้งก่อน (ทำครั้งเดียว)
+
+> ถ้าอยากแค่ **เปิดแอปดู** ไม่ได้จะแก้โค้ด ให้ข้ามไปข้อ 6 (รันบนเบราว์เซอร์) จะง่ายกว่ามาก
+
+### ทางลัด: ใช้ไฟล์ติดตั้งอัตโนมัติ
+
+ในโปรเจกต์มีไฟล์ `ติดตั้งเครื่องมือ.bat` ให้แล้ว — **คลิกขวา → Run as administrator** แล้วรอ
+ไฟล์นี้จะลง Git · VS Code · Android Studio · Python · Flutter SDK และตั้งค่า PATH / JAVA_HOME / ANDROID_HOME ให้เอง
+หลังรันเสร็จ **ต้องรีสตาร์ตเครื่อง 1 ครั้ง** แล้วยังต้องทำเองอีก 3 อย่างที่สั่งอัตโนมัติไม่ได้:
+
+1. เปิด **Developer Mode** ของ Windows (ข้อ 2.6)
+2. เปิด Android Studio ครั้งแรกให้จบขั้นตอน setup wizard เพื่อให้มันโหลด Android SDK
+3. สั่ง `flutter doctor --android-licenses` แล้วกด `y` ไปจนจบ
+
+ถ้าอยากติดตั้งเองทีละตัว ให้ทำตามหัวข้อย่อยด้านล่าง
+
+### 2.1 Flutter SDK
+- ดาวน์โหลด → https://docs.flutter.dev/get-started/install/windows
+- แตกไฟล์ไว้ที่ `C:\flutter`
+- เพิ่ม `C:\flutter\bin` ลงใน Environment Variables → Path
+- เวอร์ชันที่โปรเจกต์นี้ใช้พัฒนา: **Flutter 3.44.8 (stable)** · Dart SDK ต้อง `^3.5.0` ขึ้นไป
+
+ตรวจสอบ:
 ```powershell
 flutter --version
 ```
 
----
+### 2.2 Android Studio (เอาไว้ใช้ Android SDK + Emulator)
+- ดาวน์โหลด → https://developer.android.com/studio
+- เปิด Android Studio → **SDK Manager** → ติดตั้ง Android SDK และ **Android SDK Command-line Tools**
+- ตั้ง Environment Variable: `ANDROID_HOME` = `C:\Users\<ชื่อผู้ใช้>\AppData\Local\Android\Sdk`
 
-### 2. Android Studio
-- ดาวน์โหลดที่ → https://developer.android.com/studio
-- ติดตั้งตามปกติ
-- เปิด Android Studio → SDK Manager → ติดตั้ง **Android SDK**
-- ตั้งค่า `ANDROID_HOME` ใน Environment Variables:
-  - Variable: `ANDROID_HOME`
-  - Value: `C:\Users\ชื่อคุณ\AppData\Local\Android\Sdk`
+### 2.3 Java JDK 17 (ใช้ตัวที่มากับ Android Studio ได้เลย)
+- ตั้ง Environment Variable: `JAVA_HOME` = `C:\Program Files\Android\Android Studio\jbr`
+- โปรเจกต์นี้คอมไพล์ด้วย **Java 17** ถ้าใช้ JDK เวอร์ชันอื่นอาจคอมไพล์ไม่ผ่าน
 
----
+### 2.4 Git
+- ดาวน์โหลด → https://git-scm.com/download/win
 
-### 3. Java JDK (ใช้ของ Android Studio ได้เลย)
-ตั้งค่า JAVA_HOME ใน Environment Variables:
-- Variable: `JAVA_HOME`
-- Value: `C:\Program Files\Android\Android Studio\jbr`
+### 2.5 โปรแกรมเขียนโค้ด
+- VS Code → https://code.visualstudio.com แล้วติดตั้ง Extension **Flutter** (จะลง Dart ให้เอง)
+- หรือใช้ Android Studio เขียนก็ได้
 
----
+### 2.6 เปิด Developer Mode ของ Windows (**จำเป็น**)
+- Start → พิมพ์ "Developer settings" → เปิด **Developer Mode**
+- ถ้าไม่เปิด `flutter pub get` จะขึ้น error เรื่อง symlink
 
-### 4. Git
-- ดาวน์โหลดที่ → https://git-scm.com/download/win
-- ติดตั้งตามปกติ (กด Next ไปเรื่อยๆ)
-
----
-
-### 5. Visual Studio Code (Editor)
-- ดาวน์โหลดที่ → https://code.visualstudio.com
-- ติดตั้ง Extension: **Flutter** (จะติดตั้ง Dart ให้อัตโนมัติ)
-
----
-
-### 6. เปิด Developer Mode บน Windows
-- กด Start → พิมพ์ "Developer settings"
-- เปิด **Developer Mode** → Yes
-- (จำเป็นสำหรับ Flutter บน Windows)
-
----
-
-## รับโปรเจกต์จากเพื่อน
-
-### วิธีที่ 1 — ผ่าน GitHub
+### 2.7 (เฉพาะถ้าจะสร้างสไลด์ใหม่) Python
 ```powershell
-git clone https://github.com/username/habit-tracker.git
-cd habit-tracker
+pip install python-pptx pillow
 ```
 
-### วิธีที่ 2 — รับไฟล์ zip มาตรง
-- แตกไฟล์ zip
-- เปิด folder ด้วย VS Code หรือ Terminal
-
----
-
-## ขั้นตอนรันโปรเจกต์
-
-### Step 1 — ติดตั้ง packages
-```powershell
-cd d:\habit_tracker
-flutter pub get
-```
-
-### Step 2 — Generate database code
-```powershell
-dart run build_runner build --delete-conflicting-outputs
-```
-
-### Step 3 — เปิด Emulator
-```powershell
-flutter emulators --launch Pixel_6
-```
-> รอ ~30 วินาที ให้ emulator บูตก่อน
-
-### Step 4 — รันแอป
-```powershell
-flutter run -d emulator-5554
-```
-
----
-
-## คำสั่งที่ใช้บ่อย
-
-| คำสั่ง | ทำอะไร |
-|---|---|
-| `flutter pub get` | ติดตั้ง packages |
-| `flutter run` | รันแอป |
-| `flutter run -d emulator-5554` | รันบน Android Emulator |
-| `flutter run -d windows` | รันบน Windows Desktop |
-| `flutter devices` | ดู devices ที่เชื่อมอยู่ |
-| `flutter emulators` | ดูรายการ emulator ทั้งหมด |
-| `flutter clean` | ล้าง build cache |
-| `dart run build_runner build` | Generate .g.dart files |
-
-### คำสั่งขณะรัน (พิมพ์ใน terminal)
-| กด | ทำอะไร |
-|---|---|
-| `r` | Hot reload (เห็นผลทันที) |
-| `R` | Hot restart (reset state) |
-| `q` | ออกจากแอป |
-
----
-
-## ตรวจสอบว่าพร้อมรันหรือยัง
-
+### ตรวจว่าพร้อมหรือยัง
 ```powershell
 flutter doctor
 ```
-
-ต้องเห็น ✅ ทุกข้อ หรืออย่างน้อย:
-- ✅ Flutter
-- ✅ Android toolchain
-- ✅ Android Studio
+ต้องขึ้น ✅ อย่างน้อย 3 ข้อ: Flutter · Android toolchain · Android Studio
+(ข้อ **Visual Studio** ขึ้น ❌ ได้ ไม่กระทบ เพราะใช้สำหรับสร้างแอป Windows เท่านั้น)
 
 ---
 
-## ปัญหาที่พบบ่อย
+## 3. รับโค้ดมาลงเครื่อง
 
-**❌ `Building with plugins requires symlink support`**
-→ เปิด Developer Mode บน Windows (ดูขั้นตอนที่ 6)
+### วิธีที่ 1 — clone จาก GitHub (แนะนำ)
+```powershell
+cd D:\
+git clone https://github.com/SuperMeteo/habit_tracker.git
+cd habit_tracker
+```
 
-**❌ `JAVA_HOME not set`**
-→ ตั้งค่า JAVA_HOME ชี้ไปที่ `C:\Program Files\Android\Android Studio\jbr`
-
-**❌ `flutter pub get` ล้มเหลว**
-→ ตรวจสอบ internet แล้วลองใหม่
-
-**❌ emulator ไม่ขึ้น**
-→ เปิด Android Studio → Virtual Device Manager → กด ▶️ Pixel 6
-
-**❌ แก้ code แล้วยังเห็นหน้าเดิม**
-→ กด `R` (Hot Restart) ใน terminal
+### วิธีที่ 2 — รับไฟล์ zip
+แตกไฟล์แล้วเปิดโฟลเดอร์ด้วย VS Code
 
 ---
 
-## โครงสร้างโปรเจกต์ (สรุปสั้นๆ)
+## 4. ติดตั้งและรันครั้งแรก
+
+### ขั้นที่ 1 — ติดตั้ง package
+```powershell
+flutter pub get
+```
+
+### ขั้นที่ 2 — สร้างไฟล์โค้ดอัตโนมัติของฐานข้อมูล
+```powershell
+dart run build_runner build --delete-conflicting-outputs
+```
+> ขั้นนี้สร้างไฟล์ `lib/core/database/app_database.g.dart`
+> **ถ้าข้ามขั้นนี้จะคอมไพล์ไม่ผ่าน** โดยขึ้นว่าหาคลาส `Habit` / `HabitLog` ไม่เจอ
+> ต้องสั่งใหม่ทุกครั้งที่แก้ไฟล์ในโฟลเดอร์ `lib/core/database/tables/`
+
+### ขั้นที่ 3 — เลือกที่จะรัน
+```powershell
+flutter devices
+```
+
+**รันบน Android Emulator**
+```powershell
+flutter emulators
+flutter emulators --launch Pixel_6
+flutter run -d emulator-5554
+```
+
+**รันบน Chrome**
+```powershell
+flutter run -d chrome
+```
+
+> ⚠️ การคอมไพล์ Android **ครั้งแรก** ใช้เวลานาน (เคยจับเวลาได้ราว 17 นาที) ครั้งต่อไปเหลือไม่ถึง 1 นาที
+> ระหว่างนั้นควรปิดโปรแกรมอื่น และยังไม่ต้องเปิด emulator เพราะเครื่องอาจแรมไม่พอจน emulator ดับเอง
+
+---
+
+## 5. รันบนมือถือจริง + ติดตั้ง APK
+
+### 5.1 ต่อสายมือถือแล้วรันเลย
+1. บนมือถือ: ตั้งค่า → เกี่ยวกับโทรศัพท์ → กด **หมายเลขบิลด์** 7 ครั้ง เพื่อเปิดโหมดนักพัฒนา
+2. เปิด **การแก้จุดบกพร่อง USB (USB debugging)**
+3. ต่อสาย USB แล้วกดอนุญาตบนมือถือ
+4. ที่เครื่องคอม:
+```powershell
+flutter devices
+flutter run -d <ชื่ออุปกรณ์ที่ขึ้นมา>
+```
+
+### 5.2 สร้างไฟล์ APK เอาไปติดตั้งเอง
+```powershell
+flutter build apk --release
+```
+ได้ไฟล์ที่ → `build\app\outputs\flutter-apk\app-release.apk`
+ส่งไฟล์เข้ามือถือแล้วกดติดตั้ง (มือถือจะขออนุญาต "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ก่อน)
+
+### 5.3 ให้การแจ้งเตือนทำงาน
+- **Android 13 ขึ้นไป** จะมีหน้าต่างขอสิทธิ์แจ้งเตือนตอนกดเลือกเวลาเตือนครั้งแรก ต้องกด **อนุญาต**
+- ถ้าเผลอกดปฏิเสธ: ตั้งค่ามือถือ → แอป → Habit Tracker → การแจ้งเตือน → เปิด
+- ถ้าตั้งเวลาแล้วไม่เด้ง ให้ปิดโหมดประหยัดแบตเตอรี่ของแอปนี้ (ตั้งค่า → แอป → Habit Tracker → แบตเตอรี่ → ไม่จำกัด)
+- แอปตั้งเตือนแบบ **ไม่เป๊ะวินาที** (inexact) เพื่อไม่ต้องขอสิทธิ์ตั้งปลุกระดับระบบ เวลาที่เด้งจึงอาจคลาดไปเล็กน้อย ถือว่าปกติ
+- หลังรีสตาร์ตเครื่อง แอปจะตั้งเวลาเตือนกลับมาให้เอง
+
+---
+
+## 6. รันบนเบราว์เซอร์ (ไม่ต้องมี Android)
+
+ในโปรเจกต์มีไฟล์ช่วยไว้ 2 ตัว กดได้จาก File Explorer เลย
+
+| ไฟล์ | ใช้เมื่อไหร่ |
+|---|---|
+| `อัปเดตแอป.bat` | ใช้ครั้งแรก หรือหลังแก้โค้ด — build ใหม่แล้วเปิดแอปให้ (1–2 นาที) |
+| `เปิดแอป.bat` | เปิดแอปที่ build ไว้แล้ว เปิดเร็ว |
+
+ทั้งสองไฟล์เรียก `_serve.ps1` ซึ่งเปิดเว็บเซิร์ฟเวอร์เล็ก ๆ ด้วย PowerShell (มีอยู่แล้วในทุกเครื่อง Windows **ไม่ต้องลง Python**) แล้วเปิดแอปแบบ **หน้าต่างแอป ไม่มีแถบ URL**
+
+- เซิร์ฟเวอร์เปิดเฉพาะ `localhost` เครื่องอื่นในวง Wi-Fi เข้าไม่ได้
+- **ห้ามเปิดไฟล์ `build/web/index.html` ตรง ๆ** เพราะฐานข้อมูลต้องการ header พิเศษ (COOP/COEP) ที่มีเฉพาะตอนเปิดผ่านสคริปต์นี้
+- อยากได้ไอคอนบนเดสก์ท็อป: ตอนแอปเปิดอยู่ กดเมนู `...` ของเบราว์เซอร์ → **ติดตั้ง Habit Tracker**
+
+ข้อจำกัดของเวอร์ชันเว็บ:
+- **ไม่มีการแจ้งเตือน** (package ที่ใช้รองรับเฉพาะ Android/iOS)
+- ข้อมูลเก็บในเบราว์เซอร์เครื่องนั้น ถ้าล้างข้อมูลเบราว์เซอร์ ข้อมูลจะหาย
+- ปุ่มแชร์ไฟล์ตอนส่งออกข้อมูล จะกลายเป็นการดาวน์โหลดไฟล์แทน
+
+### ส่งแอปให้เพื่อนเปิดบนคอมของเขา
+
+เพื่อนที่แค่ใช้งาน **ไม่ต้องลง Flutter / Git / VS Code / Python เลย**
+
+1. ที่เครื่องนักพัฒนา สั่ง `flutter build web --release`
+2. สร้างโฟลเดอร์ใหม่ แล้วใส่ 3 อย่างนี้:
+   - โฟลเดอร์ `web` (ก๊อปจาก `build\web` ทั้งโฟลเดอร์)
+   - ไฟล์ `_serve.ps1`
+   - ไฟล์ `เปิดแอป.bat`
+3. บีบอัดเป็น zip ส่งให้เพื่อน
+4. เพื่อนแตกไฟล์แล้วกด `เปิดแอป.bat` — แอปจะเด้งขึ้นมาเอง
+
+> ในโปรเจกต์มีไฟล์ `สร้างชุดส่งเพื่อน.bat` ที่ทำข้อ 1–3 ให้อัตโนมัติ ได้ไฟล์ zip ออกมาที่โฟลเดอร์ `dist`
+
+---
+
+## 7. คำสั่งที่ใช้บ่อย
+
+| คำสั่ง | ทำอะไร |
+|---|---|
+| `flutter pub get` | ติดตั้ง package ตาม pubspec.yaml |
+| `dart run build_runner build --delete-conflicting-outputs` | สร้างโค้ดฐานข้อมูลใหม่ |
+| `flutter run -d <device>` | รันแอปแบบพัฒนา |
+| `flutter devices` / `flutter emulators` | ดูอุปกรณ์ / emulator |
+| `flutter analyze` | ตรวจโค้ดหาจุดผิดโดยไม่ต้องรัน |
+| `flutter test` | รันชุดทดสอบอัตโนมัติ |
+| `flutter build apk --release` | สร้างไฟล์ APK |
+| `flutter build web` | สร้างเวอร์ชันเว็บลง `build/web` |
+| `flutter clean` | ล้างไฟล์ build (ใช้เมื่อคอมไพล์เพี้ยน แล้วต้อง `flutter pub get` ใหม่) |
+
+### ปุ่มลัดระหว่างที่ `flutter run` ทำงานอยู่
+| กด | ผล |
+|---|---|
+| `r` | Hot reload — เห็นผลการแก้ทันที |
+| `R` | Hot restart — เริ่มแอปใหม่ (ใช้เมื่อแก้แล้วหน้าจอไม่เปลี่ยน) |
+| `q` | ออก |
+
+---
+
+## 8. ตรวจว่าโค้ดยังดีอยู่ (analyze / test)
+
+```powershell
+flutter analyze
+flutter test
+```
+
+- `flutter analyze` ต้องขึ้น **No issues found!**
+- `flutter test` ล่าสุดรันผ่าน **45 กรณี** ครอบคลุม:
+
+| ไฟล์ทดสอบ | ทดสอบอะไร |
+|---|---|
+| `test/streak_calculator_test.dart` | Streak รายวัน และแบบเลือกวัน (จ/พ/ศ) |
+| `test/weekly_frequency_test.dart` | ความถี่ N ครั้งต่อสัปดาห์ · อัตราสำเร็จ · Streak รายสัปดาห์ |
+| `test/habit_card_test.dart` | การ์ดหน้าหลัก: ติ๊ก · ค่าตัวเลข · ยอดรายสัปดาห์ |
+| `test/categories_db_test.dart` | ฐานข้อมูลจริง (ในหน่วยความจำ): เพิ่ม/แก้/ลบหมวดหมู่ และกฎกันลบ |
+| `test/data_exporter_test.dart` | ไฟล์ CSV/JSON ที่ส่งออก รวมถึงการกันสูตร Excel |
+| `test/notification_service_test.dart` | เวลาแจ้งเตือนครั้งถัดไป · รายการเตือนของแต่ละ habit |
+
+รันเฉพาะไฟล์เดียว:
+```powershell
+flutter test test/streak_calculator_test.dart
+```
+
+---
+
+## 9. โครงสร้างโปรเจกต์
 
 ```
 lib/
-├── main.dart              ← จุดเริ่มต้นแอป
-├── app.dart               ← ตั้งค่า theme + navigation
+├── main.dart                     จุดเริ่มต้น: เตรียมวันที่ภาษาไทย + ตั้งเวลาแจ้งเตือนทุก habit
+├── app.dart                      ธีม + เส้นทางหน้าจอ (go_router)
 ├── core/
-│   ├── database/          ← ฐานข้อมูล SQLite (drift) — habits, categories, habit_logs
-│   ├── theme/             ← สี, ฟอนต์, ธีม
-│   ├── services/          ← notification_service.dart (แจ้งเตือนตามเวลา)
-│   └── utils/             ← date_utils, streak_calculator, data_exporter (CSV/JSON)
-└── features/
-    ├── dashboard/         ← หน้าหลัก (เช็ค habit รายวัน)
-    ├── habits/            ← เพิ่ม/แก้ไข habit, เลือก template/icon, จัดการหมวดหมู่
-    ├── analytics/         ← กราฟรายสัปดาห์, calendar heatmap, streak card
-    └── settings/          ← ตั้งค่าแอป, ส่งออกข้อมูล (export_sheet.dart)
+│   ├── database/
+│   │   ├── app_database.dart     คำสั่งอ่าน–เขียนฐานข้อมูลทั้งหมด
+│   │   ├── connection/           แยกวิธีเปิดฐานข้อมูล: มือถือ = ไฟล์ · เว็บ = ในเบราว์เซอร์
+│   │   └── tables/               นิยาม 3 ตาราง
+│   ├── services/
+│   │   └── notification_service.dart   ตั้ง/ยกเลิกการแจ้งเตือน
+│   ├── theme/app_theme.dart      สีและธีมสว่าง–มืด
+│   └── utils/
+│       ├── streak_calculator.dart   คำนวณ Streak และอัตราสำเร็จ
+│       ├── data_exporter.dart       แปลงข้อมูลเป็น CSV / JSON
+│       └── date_utils.dart          จัดการวันที่ภาษาไทย
+├── features/
+│   ├── dashboard/                หน้าหลัก: แถบวันที่ · การ์ด habit · สรุปความคืบหน้า
+│   ├── habits/                   เพิ่ม/แก้ไข habit · แม่แบบ · จัดการ habit · จัดการหมวดหมู่
+│   ├── analytics/                Streak · ปฏิทินความถี่ · กราฟรายสัปดาห์
+│   └── settings/                 ธีม · ทางเข้าหน้าจัดการ · ส่งออกข้อมูล
+└── shared/widgets/               แถบเมนูล่าง · หน้าจอตอนยังไม่มีข้อมูล
 ```
 
-## ฟีเจอร์ที่ทำเสร็จแล้ว
+**หน้าจอในแอป (เส้นทาง)**
 
-- ติ๊กเช็ค habit รายวัน + คำนวณ Streak
-- ตั้งความถี่แบบ "N ครั้งต่อสัปดาห์"
-- จัดการหมวดหมู่ (เพิ่ม/แก้ไข/ลบ)
-- กราฟสถิติ + calendar heatmap ในหน้า Analytics
-- ส่งออกข้อมูลเป็น CSV / JSON จากหน้าตั้งค่า (ใช้ share_plus)
-- แจ้งเตือนตามเวลาที่ตั้งใน habit (flutter_local_notifications + flutter_timezone) — ทดสอบใช้งานได้จริงบน Android
-- ชุดทดสอบอัตโนมัติ (`flutter test`) ครอบคลุม การ์ด habit และ Streak รายวัน/เลือกวัน
-
-ที่ยังไม่ได้ทำ: ไอคอนแอป (ยังใช้ของ default) และ `applicationId` ยังเป็น `com.example` · ยังไม่ทดลองกับผู้ใช้จริง
+| เส้นทาง | หน้า |
+|---|---|
+| `/` | หน้าหลัก |
+| `/analytics` | สถิติ |
+| `/settings` | ตั้งค่า |
+| `/habits/add` · `/habits/edit` | เพิ่ม / แก้ไข habit |
+| `/habits/manage` | จัดการ habit ทั้งหมด |
+| `/categories/manage` | จัดการหมวดหมู่ |
 
 ---
 
-> 💡 **แนะนำ:** รัน `flutter doctor` ก่อนเสมอ ถ้ายังมีปัญหาให้ส่ง output มาให้ดู
+## 10. ฐานข้อมูลและ package ที่ใช้
+
+### ฐานข้อมูล SQLite 3 ตาราง
+
+| ตาราง | เก็บอะไร | จุดสำคัญ |
+|---|---|---|
+| `Categories` | หมวดหมู่ (ชื่อ สี ไอคอน) | ตอนสร้างฐานข้อมูลครั้งแรก ระบบใส่ให้ 5 หมวด |
+| `Habits` | habit แต่ละตัว | เก็บความถี่ · วันที่เลือก · จำนวนครั้งต่อสัปดาห์ · เป้าตัวเลข · เวลาแจ้งเตือน |
+| `HabitLogs` | การบันทึกรายวัน | คีย์ไม่ซ้ำคือ (habitId, loggedDate) — 1 habit มีได้ 1 บันทึกต่อวัน |
+
+### package หลัก
+
+| package | ใช้ทำอะไร |
+|---|---|
+| `drift` + `sqlite3_flutter_libs` | ฐานข้อมูล SQLite ในเครื่อง |
+| `flutter_riverpod` | จัดการสถานะ + รีเฟรชหน้าจออัตโนมัติเมื่อข้อมูลเปลี่ยน |
+| `go_router` | เส้นทางหน้าจอ |
+| `fl_chart` | กราฟแท่ง |
+| `flutter_local_notifications` + `flutter_timezone` + `timezone` | แจ้งเตือนตามเวลา |
+| `share_plus` | แชร์/ดาวน์โหลดไฟล์ที่ส่งออก |
+| `shared_preferences` | จำค่าธีม |
+| `intl` | วันที่ภาษาไทย |
+
+---
+
+## 11. เอกสารและสไลด์ใน docs/
+
+| ไฟล์ | คืออะไร |
+|---|---|
+| `docs/นำเสนอโครงการ1_HabitTracker.pptx` | สไลด์ชุด "โครงการ 1" สร้างจาก `docs/make_pptx.py` |
+| `docs/นำเสนอ100_HabitTracker.pptx` | สไลด์ชุดเต็ม 16 หน้า สร้างจาก `docs/make_pptx_100.py` + `docs/_deck_lib.py` |
+| `docs/screenshots/` · `docs/shots100/` | ภาพหน้าจอจากแอปที่รันจริง |
+| `docs/test_evidence/` | ภาพหลักฐานการทดสอบ |
+
+สร้างสไลด์ใหม่ (ต้องมี `python-pptx` และ `pillow`):
+```powershell
+$env:PYTHONUTF8 = "1"
+python docs\make_pptx_100.py
+```
+> คำสั่งนี้จะ **เขียนทับ** ไฟล์ `.pptx` เดิม ถ้าเคยแก้ในไฟล์ด้วยมือ สิ่งที่แก้จะหายไป
+
+---
+
+## 12. ปัญหาที่พบบ่อยและวิธีแก้
+
+| อาการ | สาเหตุ | วิธีแก้ |
+|---|---|---|
+| `Building with plugins requires symlink support` | ยังไม่เปิด Developer Mode ของ Windows | เปิดตามข้อ 2.6 แล้วสั่ง `flutter pub get` ใหม่ |
+| `JAVA_HOME is not set` | ยังไม่ตั้งค่า JDK | ตั้ง `JAVA_HOME` ตามข้อ 2.3 แล้วเปิด terminal ใหม่ |
+| คอมไพล์ไม่ผ่าน หาคลาส `Habit` / `HabitLog` ไม่เจอ | ยังไม่ได้สร้างไฟล์ `.g.dart` | `dart run build_runner build --delete-conflicting-outputs` |
+| `flutter doctor` ไม่ผ่านหัวข้อ Android | ไม่มี cmdline-tools หรือยังไม่ยอมรับ license | ลง **Android SDK Command-line Tools** จาก SDK Manager แล้วสั่ง `flutter doctor --android-licenses` |
+| emulator ดับเองตอนคอมไพล์ | แรมไม่พอ | ปิดโปรแกรมอื่น · คอมไพล์ให้เสร็จก่อนแล้วค่อยเปิด emulator |
+| แก้โค้ดแล้วหน้าจอไม่เปลี่ยน | hot reload ไม่พอ | กด `R` (hot restart) |
+| แจ้งเตือนไม่เด้งบนมือถือ | ไม่ได้อนุญาต หรือโดนโหมดประหยัดแบตปิดไว้ | ดูข้อ 5.3 |
+| เปิดเว็บแล้วจอขาว / ฐานข้อมูลพัง | เปิดไฟล์ `index.html` ตรง ๆ | ต้องเปิดผ่าน `เปิดแอป.bat` เท่านั้น |
+| เปิดไฟล์ CSV ใน Excel แล้วภาษาไทยเพี้ยน | Excel อ่านรหัสตัวอักษรผิด | ไฟล์ที่แอปสร้างใส่ BOM มาให้แล้ว ถ้ายังเพี้ยนให้ใช้ Excel นำเข้าแบบ UTF-8 |
+| `flutter pub get` ล้มเหลว | เน็ตมีปัญหา | ตรวจอินเทอร์เน็ตแล้วลองใหม่ |
+
+---
+
+## 13. ข้อจำกัดที่รู้อยู่ / งานที่ยังเหลือ
+
+- **ยังไม่ได้ยืนยันด้วยตาว่าการแจ้งเตือนเด้งบนมือถือจริง** — โค้ดและค่าตั้ง Android ครบแล้ว และผ่านชุดทดสอบอัตโนมัติ 13 กรณี แต่ควรทดสอบบนเครื่องจริงก่อนนำเสนอ
+- ไอคอนแอปยังเป็นไอคอนเริ่มต้นของ Flutter
+- `applicationId` ยังเป็น `com.example.habit_tracker` ต้องเปลี่ยนก่อนนำขึ้น Play Store
+- ไฟล์ APK ที่ build ตอนนี้เซ็นด้วยกุญแจ debug ใช้แจกและติดตั้งเองได้ แต่ขึ้น Play Store ไม่ได้
+- ยังไม่มีระบบสมาชิก ไม่มีการซิงก์ขึ้นคลาวด์ (ตั้งใจให้เป็นแอปออฟไลน์)
+- ยังไม่ได้ทดลองใช้กับผู้ใช้จริงและเก็บแบบประเมิน
+
+---
+
+## 14. Git และสาขาในโปรเจกต์นี้
+
+| สาขา | เนื้อหา |
+|---|---|
+| `main` | เวอร์ชันออฟไลน์ที่คู่มือนี้อธิบาย (ตัวหลัก) |
+| `backup-online-version` | เวอร์ชันทดลองอีกสายที่ต่อ Supabase มีระบบแต้ม/แรงค์/leaderboard — เก็บไว้เฉย ๆ ยังไม่ได้รวมเข้า `main` |
+
+ดูสาขาทั้งหมด:
+```powershell
+git branch -a
+```
+
+---
+
+> 💡 ติดปัญหาตรงไหน ให้ copy ข้อความ error ทั้งหมดจาก terminal ส่งมา จะช่วยหาสาเหตุได้เร็วกว่าบอกแค่ว่า "รันไม่ได้"

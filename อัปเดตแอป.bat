@@ -1,19 +1,19 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
-set PYTHONUTF8=1
-title Habit Tracker - update
+title Habit Tracker - อัปเดต
 echo.
-echo   Building... please wait 1-2 minutes
+echo   กำลังสร้างแอปเวอร์ชันใหม่ รอสัก 1-2 นาที...
 echo.
-call flutter build web
+call flutter build web --release
 if errorlevel 1 (
   echo.
-  echo   [X] Build failed - see message above
+  echo   [X] สร้างไม่สำเร็จ ดูข้อความผิดพลาดด้านบน
   pause
   exit /b 1
 )
 echo.
-echo   [OK] Done - opening app
+echo   [OK] เสร็จแล้ว กำลังเปิดแอป
 echo.
-python "_serve.py"
+powershell -NoProfile -ExecutionPolicy Bypass -File "_serve.ps1"
+if errorlevel 1 pause

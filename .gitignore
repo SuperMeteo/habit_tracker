@@ -46,3 +46,6 @@ app.*.map.json
 
 # Gradle/Kotlin build cache
 android/.kotlin/
+
+# ชุดแอปสำหรับส่งให้เพื่อน (สร้างใหม่ได้ด้วย สร้างชุดส่งเพื่อน.bat)
+dist/
