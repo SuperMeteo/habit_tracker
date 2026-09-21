@@ -2,8 +2,10 @@
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 
 $root = $null
-foreach ($candidate in @((Join-Path $PSScriptRoot 'web'), (Join-Path $PSScriptRoot 'build\web'))) {
-    if (Test-Path (Join-Path $candidate 'index.html')) {
+foreach ($candidate in @((Join-Path $PSScriptRoot 'build\web'), (Join-Path $PSScriptRoot 'web'))) {
+    $hasIndex = Test-Path (Join-Path $candidate 'index.html')
+    $hasBuilt = (Test-Path (Join-Path $candidate 'flutter_bootstrap.js')) -or (Test-Path (Join-Path $candidate 'main.dart.js'))
+    if ($hasIndex -and $hasBuilt) {
         $root = (Resolve-Path $candidate).Path
         break
     }
@@ -107,15 +109,26 @@ while ($listener.IsListening) {
 
         $file = Join-Path $root ($requestPath.TrimStart('/').Replace('/', '\'))
         $file = [IO.Path]::GetFullPath($file)
+        $response = $context.Response
+
         if (-not $file.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
             $file = Join-Path $root 'index.html'
         }
         if (-not (Test-Path $file -PathType Leaf)) {
+            if ([IO.Path]::GetExtension($file)) {
+                Write-Host ("  [404] " + $requestPath)
+                $response.StatusCode = 404
+                $response.ContentType = 'text/plain; charset=utf-8'
+                $missing = [Text.Encoding]::UTF8.GetBytes("ไม่พบไฟล์ $requestPath")
+                $response.ContentLength64 = $missing.Length
+                $response.OutputStream.Write($missing, 0, $missing.Length)
+                $response.OutputStream.Close()
+                continue
+            }
             $file = Join-Path $root 'index.html'
         }
 
         $extension = [IO.Path]::GetExtension($file).ToLower()
-        $response = $context.Response
         $response.ContentType = if ($mime.ContainsKey($extension)) { $mime[$extension] } else { 'application/octet-stream' }
         $response.Headers.Add('Cross-Origin-Opener-Policy', 'same-origin')
         $response.Headers.Add('Cross-Origin-Embedder-Policy', 'require-corp')
