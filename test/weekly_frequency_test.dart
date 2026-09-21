@@ -4,8 +4,8 @@ import 'package:habit_tracker/core/utils/date_utils.dart';
 import 'package:habit_tracker/core/utils/streak_calculator.dart';
 
 Habit _habit({String type = 'times_per_week', int times = 3}) => Habit(
-      id: 1,
-      categoryId: 1,
+      id: 'h1',
+      categoryId: 'c1',
       name: 'วิ่ง',
       description: '',
       frequencyType: type,
@@ -15,15 +15,20 @@ Habit _habit({String type = 'times_per_week', int times = 3}) => Habit(
       iconCode: 0xe532,
       isActive: true,
       createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      syncStatus: 'synced',
     );
 
 int _id = 0;
 HabitLog _log(DateTime date, {bool done = true}) => HabitLog(
-      id: ++_id,
-      habitId: 1,
+      id: 'l${++_id}',
+      habitId: 'h1',
       loggedDate: date,
       isDone: done,
       createdAt: date,
+      pointsAwarded: 0,
+      updatedAt: date,
+      syncStatus: 'synced',
     );
 
 DateTime _day(DateTime weekStart, int weekOffset, int dayOffset) => DateTime(

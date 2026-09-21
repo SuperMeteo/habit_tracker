@@ -5,10 +5,11 @@ import 'package:habit_tracker/core/utils/data_exporter.dart';
 
 final _created = DateTime(2026, 1, 1);
 
-Category _category(int id, String name) => Category(
-    id: id, name: name, colorHex: '#6366F1', iconCode: 0xe532, createdAt: _created);
+Category _category(String id, String name) => Category(
+    id: id, name: name, colorHex: '#6366F1', iconCode: 0xe532, createdAt: _created,
+    updatedAt: _created, syncStatus: 'synced');
 
-Habit _habit(int id, String name, {int categoryId = 1, double? target, String? unit}) =>
+Habit _habit(String id, String name, {String categoryId = 'c1', double? target, String? unit}) =>
     Habit(
       id: id,
       categoryId: categoryId,
@@ -23,9 +24,11 @@ Habit _habit(int id, String name, {int categoryId = 1, double? target, String? u
       iconCode: 0xe532,
       isActive: true,
       createdAt: _created,
+      updatedAt: _created,
+      syncStatus: 'synced',
     );
 
-HabitLog _log(int id, int habitId, DateTime date,
+HabitLog _log(String id, String habitId, DateTime date,
         {bool done = true, double? value, String? note}) =>
     HabitLog(
       id: id,
@@ -35,16 +38,19 @@ HabitLog _log(int id, int habitId, DateTime date,
       value: value,
       note: note,
       createdAt: date,
+      pointsAwarded: 0,
+      updatedAt: date,
+      syncStatus: 'synced',
     );
 
 List<String> _lines(String csv) =>
     csv.substring(1).split('\r\n').where((l) => l.isNotEmpty).toList();
 
 void main() {
-  final categories = [_category(1, 'สุขภาพ'), _category(2, 'การเรียนรู้')];
+  final categories = [_category('c1', 'สุขภาพ'), _category('c2', 'การเรียนรู้')];
   final habits = [
-    _habit(1, 'ดื่มน้ำ', target: 8, unit: 'แก้ว'),
-    _habit(2, 'อ่านหนังสือ', categoryId: 2),
+    _habit('h1', 'ดื่มน้ำ', target: 8, unit: 'แก้ว'),
+    _habit('h2', 'อ่านหนังสือ', categoryId: 'c2'),
   ];
 
   group('CSV', () {
@@ -53,8 +59,8 @@ void main() {
         categories: categories,
         habits: habits,
         logs: [
-          _log(1, 2, DateTime(2026, 9, 15)),
-          _log(2, 1, DateTime(2026, 9, 14), value: 6),
+          _log('l1', 'h2', DateTime(2026, 9, 15)),
+          _log('l2', 'h1', DateTime(2026, 9, 14), value: 6),
         ],
       );
       expect(csv.startsWith('﻿'), isTrue);
@@ -68,9 +74,9 @@ void main() {
     test('ข้อความที่มี , " หรือขึ้นบรรทัดใหม่ ถูกครอบด้วยเครื่องหมายคำพูด', () {
       final csv = DataExporter.toCsv(
         categories: categories,
-        habits: [_habit(1, 'วิ่ง, เดิน')],
+        habits: [_habit('h1', 'วิ่ง, เดิน')],
         logs: [
-          _log(1, 1, DateTime(2026, 9, 1), note: 'เขาบอกว่า "ดี"\nมาก'),
+          _log('l1', 'h1', DateTime(2026, 9, 1), note: 'เขาบอกว่า "ดี"\nมาก'),
         ],
       );
       expect(csv, contains('"วิ่ง, เดิน"'));
@@ -79,9 +85,9 @@ void main() {
 
     test('กันสูตร Excel: ข้อความขึ้นต้นด้วย = + - @ ถูกใส่ \' นำหน้า แต่ตัวเลขติดลบไม่โดน', () {
       final csv = DataExporter.toCsv(
-        categories: [_category(1, '@admin')],
-        habits: [_habit(1, '=HYPERLINK("x")', target: 5)],
-        logs: [_log(1, 1, DateTime(2026, 9, 1), value: -1, note: '+1')],
+        categories: [_category('c1', '@admin')],
+        habits: [_habit('h1', '=HYPERLINK("x")', target: 5)],
+        logs: [_log('l1', 'h1', DateTime(2026, 9, 1), value: -1, note: '+1')],
       );
       final row = _lines(csv)[1];
       expect(row, contains('"\'=HYPERLINK(""x"")"'));
@@ -93,8 +99,8 @@ void main() {
     test('ค่าทศนิยมคงไว้ ค่าจำนวนเต็มไม่มี .0', () {
       final csv = DataExporter.toCsv(
         categories: categories,
-        habits: [_habit(1, 'วิ่ง', target: 5, unit: 'กม.')],
-        logs: [_log(1, 1, DateTime(2026, 9, 1), value: 2.5)],
+        habits: [_habit('h1', 'วิ่ง', target: 5, unit: 'กม.')],
+        logs: [_log('l1', 'h1', DateTime(2026, 9, 1), value: 2.5)],
       );
       expect(_lines(csv)[1], '2026-09-01,วิ่ง,สุขภาพ,1,2.5,กม.,5,');
     });
@@ -103,7 +109,7 @@ void main() {
       final csv = DataExporter.toCsv(
         categories: categories,
         habits: const [],
-        logs: [_log(1, 99, DateTime(2026, 9, 1), done: false)],
+        logs: [_log('l1', 'h99', DateTime(2026, 9, 1), done: false)],
       );
       expect(_lines(csv)[1], '2026-09-01,,,0,,,,');
     });
@@ -111,7 +117,7 @@ void main() {
 
   group('JSON', () {
     test('อ่านกลับได้ครบทุกตาราง', () {
-      final logs = [_log(1, 1, DateTime(2026, 9, 14), value: 6)];
+      final logs = [_log('l1', 'h1', DateTime(2026, 9, 14), value: 6)];
       final json = DataExporter.toJson(
         categories: categories,
         habits: habits,

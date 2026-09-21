@@ -12,8 +12,8 @@ Habit _habit({
   String description = '',
 }) =>
     Habit(
-      id: 1,
-      categoryId: 1,
+      id: 'x1',
+      categoryId: 'c1',
       name: 'ดื่มน้ำ',
       description: description,
       frequencyType: type,
@@ -25,15 +25,20 @@ Habit _habit({
       iconCode: Icons.water_drop.codePoint,
       isActive: true,
       createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      syncStatus: 'synced',
     );
 
 HabitLog _log({bool done = true, double? value}) => HabitLog(
-      id: 1,
-      habitId: 1,
+      id: 'x1',
+      habitId: 'x1',
       loggedDate: DateTime(2026, 9, 17),
       isDone: done,
       value: value,
       createdAt: DateTime(2026, 9, 17),
+      pointsAwarded: 0,
+      updatedAt: DateTime(2026, 9, 17),
+      syncStatus: 'synced',
     );
 
 Future<void> _pump(WidgetTester tester, HabitWithLog item,

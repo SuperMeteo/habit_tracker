@@ -5,7 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 Habit _habit({
-  int id = 3,
+  String id = 'h3',
   String type = 'daily',
   String days = '[1,2,3,4,5,6,7]',
   String? reminder = '07:30',
@@ -15,7 +15,7 @@ Habit _habit({
 }) =>
     Habit(
       id: id,
-      categoryId: 1,
+      categoryId: 'c1',
       name: 'วิ่ง',
       description: '',
       frequencyType: type,
@@ -28,6 +28,8 @@ Habit _habit({
       iconCode: 0xe532,
       isActive: true,
       createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      syncStatus: 'synced',
     );
 
 void main() {
@@ -86,18 +88,20 @@ void main() {
 
   group('รายการแจ้งเตือนของ habit', () {
     test('รายวัน / ต่อสัปดาห์ → เตือนทุกวัน 1 รายการ', () {
-      expect(NotificationService.slotsFor(_habit()), [(id: 30, weekday: null)]);
+      final base = NotificationService.notifBase('h3') * 10;
+      expect(NotificationService.slotsFor(_habit()), [(id: base, weekday: null)]);
       expect(NotificationService.slotsFor(_habit(type: 'times_per_week')),
-          [(id: 30, weekday: null)]);
+          [(id: base, weekday: null)]);
     });
 
     test('เลือกวัน → แยกรายการตามวัน ไม่ซ้ำ', () {
+      final base = NotificationService.notifBase('h3') * 10;
       final slots = NotificationService.slotsFor(
           _habit(type: 'specific_days', days: '[5,1,3,3,9]'));
       expect(slots, [
-        (id: 31, weekday: 1),
-        (id: 33, weekday: 3),
-        (id: 35, weekday: 5),
+        (id: base + 1, weekday: 1),
+        (id: base + 3, weekday: 3),
+        (id: base + 5, weekday: 5),
       ]);
     });
 
@@ -105,11 +109,16 @@ void main() {
       expect(NotificationService.slotsFor(_habit(reminder: null)), isEmpty);
     });
 
-    test('รหัสที่ต้องยกเลิกครอบคลุมทุกวัน และไม่ชนกับ habit ถัดไป', () {
-      final ids3 = NotificationService.allIdsFor(3);
-      final ids4 = NotificationService.allIdsFor(4);
-      expect(ids3, [30, 31, 32, 33, 34, 35, 36, 37]);
-      expect(ids3.toSet().intersection(ids4.toSet()), isEmpty);
+    test('รหัสจาก UUID คงที่ทุกครั้ง อยู่ในช่วง int32 และไม่ชนกับ habit อื่น', () {
+      const a = '5f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f';
+      const b = '5f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e40';
+      final idsA = NotificationService.allIdsFor(a);
+      expect(idsA, NotificationService.allIdsFor(a));
+      expect(idsA.length, 8);
+      expect(idsA.last - idsA.first, 7);
+      expect(idsA.every((id) => id >= 0 && id <= 2147483647), isTrue);
+      expect(idsA.toSet().intersection(NotificationService.allIdsFor(b).toSet()),
+          isEmpty);
     });
   });
 

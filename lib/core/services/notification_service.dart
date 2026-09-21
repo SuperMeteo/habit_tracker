@@ -80,7 +80,7 @@ class NotificationService {
     }
   }
 
-  Future<void> cancelForHabit(int habitId) async {
+  Future<void> cancelForHabit(String habitId) async {
     if (!isSupported) return;
     try {
       await init();
@@ -90,7 +90,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _cancelIds(int habitId) async {
+  Future<void> _cancelIds(String habitId) async {
     for (final id in allIdsFor(habitId)) {
       await _plugin.cancel(id);
     }
@@ -117,13 +117,27 @@ class NotificationService {
     }
   }
 
-  static List<int> allIdsFor(int habitId) =>
-      List.generate(8, (i) => habitId * 10 + i);
+  static const _maxBase = 214748364;
+
+  static int notifBase(String habitId) {
+    var hash = 0x811c9dc5;
+    for (final unit in habitId.codeUnits) {
+      hash ^= unit;
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
+    }
+    return hash % _maxBase;
+  }
+
+  static List<int> allIdsFor(String habitId) {
+    final base = notifBase(habitId) * 10;
+    return List.generate(8, (i) => base + i);
+  }
 
   static List<ReminderSlot> slotsFor(Habit habit) {
     if (parseReminderTime(habit.reminderTime) == null) return const [];
+    final base = notifBase(habit.id) * 10;
     if (habit.frequencyType != 'specific_days') {
-      return [(id: habit.id * 10, weekday: null)];
+      return [(id: base, weekday: null)];
     }
     List<int> days;
     try {
@@ -132,7 +146,7 @@ class NotificationService {
       days = const [];
     }
     final valid = days.where((d) => d >= 1 && d <= 7).toSet().toList()..sort();
-    return [for (final d in valid) (id: habit.id * 10 + d, weekday: d)];
+    return [for (final d in valid) (id: base + d, weekday: d)];
   }
 
   static ({int hour, int minute})? parseReminderTime(String? value) {

@@ -16,7 +16,6 @@ dependencies:
 
   # State Management
   flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.3.5
 
   # Database (SQLite)
   drift: ^2.21.0
@@ -41,6 +40,10 @@ dependencies:
   flutter_timezone: ^5.1.0
   timezone: ^0.10.1
 
+  # Online (Supabase)
+  supabase_flutter: ^2.16.0
+  connectivity_plus: ^7.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -49,7 +52,7 @@ dev_dependencies:
   # Code Generation
   drift_dev: ^2.21.0
   build_runner: ^2.4.13
-  riverpod_generator: ^2.4.3
+  sqlite3: ^2.9.4
 
 flutter:
   uses-material-design: true

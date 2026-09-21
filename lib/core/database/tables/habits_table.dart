@@ -2,8 +2,9 @@ import 'package:drift/drift.dart';
 import 'categories_table.dart';
 
 class Habits extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get categoryId => integer().references(Categories, #id)();
+  // UUID (sync-ready)
+  TextColumn get id => text()();
+  TextColumn get categoryId => text().references(Categories, #id)();
   TextColumn get name => text().withLength(min: 1, max: 100)();
   TextColumn get description => text().withDefault(const Constant(''))();
   // 'daily' | 'specific_days' | 'times_per_week'
@@ -20,4 +21,14 @@ class Habits extends Table {
   IntColumn get iconCode => integer().withDefault(const Constant(0xe532))();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  // ─── sync fields ───────────────────────────────────────────────
+  TextColumn get userId => text().nullable()();           // null = guest
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get deletedAt => dateTime().nullable()(); // soft delete
+  TextColumn get syncStatus =>
+      text().withDefault(const Constant('pending'))();     // 'pending' | 'synced'
+
+  @override
+  Set<Column> get primaryKey => {id};
 }

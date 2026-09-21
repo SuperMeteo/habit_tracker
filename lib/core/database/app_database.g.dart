@@ -11,13 +11,9 @@ class $CategoriesTable extends Categories
   $CategoriesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -50,9 +46,45 @@ class $CategoriesTable extends Categories
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, name, colorHex, iconCode, createdAt];
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        name,
+        colorHex,
+        iconCode,
+        createdAt,
+        userId,
+        updatedAt,
+        deletedAt,
+        syncStatus
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -65,6 +97,8 @@ class $CategoriesTable extends Categories
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -84,6 +118,24 @@ class $CategoriesTable extends Categories
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
     return context;
   }
 
@@ -94,7 +146,7 @@ class $CategoriesTable extends Categories
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Category(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       colorHex: attachedDatabase.typeMapping
@@ -103,6 +155,14 @@ class $CategoriesTable extends Categories
           .read(DriftSqlType.int, data['${effectivePrefix}icon_code'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
     );
   }
 
@@ -113,25 +173,41 @@ class $CategoriesTable extends Categories
 }
 
 class Category extends DataClass implements Insertable<Category> {
-  final int id;
+  final String id;
   final String name;
   final String colorHex;
   final int iconCode;
   final DateTime createdAt;
+  final String? userId;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final String syncStatus;
   const Category(
       {required this.id,
       required this.name,
       required this.colorHex,
       required this.iconCode,
-      required this.createdAt});
+      required this.createdAt,
+      this.userId,
+      required this.updatedAt,
+      this.deletedAt,
+      required this.syncStatus});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
+    map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['color_hex'] = Variable<String>(colorHex);
     map['icon_code'] = Variable<int>(iconCode);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
     return map;
   }
 
@@ -142,6 +218,13 @@ class Category extends DataClass implements Insertable<Category> {
       colorHex: Value(colorHex),
       iconCode: Value(iconCode),
       createdAt: Value(createdAt),
+      userId:
+          userId == null && nullToAbsent ? const Value.absent() : Value(userId),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      syncStatus: Value(syncStatus),
     );
   }
 
@@ -149,37 +232,53 @@ class Category extends DataClass implements Insertable<Category> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Category(
-      id: serializer.fromJson<int>(json['id']),
+      id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       colorHex: serializer.fromJson<String>(json['colorHex']),
       iconCode: serializer.fromJson<int>(json['iconCode']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      userId: serializer.fromJson<String?>(json['userId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
+      'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'colorHex': serializer.toJson<String>(colorHex),
       'iconCode': serializer.toJson<int>(iconCode),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'userId': serializer.toJson<String?>(userId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'syncStatus': serializer.toJson<String>(syncStatus),
     };
   }
 
   Category copyWith(
-          {int? id,
+          {String? id,
           String? name,
           String? colorHex,
           int? iconCode,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<String?> userId = const Value.absent(),
+          DateTime? updatedAt,
+          Value<DateTime?> deletedAt = const Value.absent(),
+          String? syncStatus}) =>
       Category(
         id: id ?? this.id,
         name: name ?? this.name,
         colorHex: colorHex ?? this.colorHex,
         iconCode: iconCode ?? this.iconCode,
         createdAt: createdAt ?? this.createdAt,
+        userId: userId.present ? userId.value : this.userId,
+        updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+        syncStatus: syncStatus ?? this.syncStatus,
       );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -188,6 +287,11 @@ class Category extends DataClass implements Insertable<Category> {
       colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
       iconCode: data.iconCode.present ? data.iconCode.value : this.iconCode,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
     );
   }
 
@@ -198,13 +302,18 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('name: $name, ')
           ..write('colorHex: $colorHex, ')
           ..write('iconCode: $iconCode, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, colorHex, iconCode, createdAt);
+  int get hashCode => Object.hash(id, name, colorHex, iconCode, createdAt,
+      userId, updatedAt, deletedAt, syncStatus);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -213,35 +322,60 @@ class Category extends DataClass implements Insertable<Category> {
           other.name == this.name &&
           other.colorHex == this.colorHex &&
           other.iconCode == this.iconCode &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.userId == this.userId &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.syncStatus == this.syncStatus);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
-  final Value<int> id;
+  final Value<String> id;
   final Value<String> name;
   final Value<String> colorHex;
   final Value<int> iconCode;
   final Value<DateTime> createdAt;
+  final Value<String?> userId;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<String> syncStatus;
+  final Value<int> rowid;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.colorHex = const Value.absent(),
     this.iconCode = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   CategoriesCompanion.insert({
-    this.id = const Value.absent(),
+    required String id,
     required String name,
     this.colorHex = const Value.absent(),
     this.iconCode = const Value.absent(),
     this.createdAt = const Value.absent(),
-  }) : name = Value(name);
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name);
   static Insertable<Category> custom({
-    Expression<int>? id,
+    Expression<String>? id,
     Expression<String>? name,
     Expression<String>? colorHex,
     Expression<int>? iconCode,
     Expression<DateTime>? createdAt,
+    Expression<String>? userId,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? syncStatus,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -249,21 +383,36 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       if (colorHex != null) 'color_hex': colorHex,
       if (iconCode != null) 'icon_code': iconCode,
       if (createdAt != null) 'created_at': createdAt,
+      if (userId != null) 'user_id': userId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CategoriesCompanion copyWith(
-      {Value<int>? id,
+      {Value<String>? id,
       Value<String>? name,
       Value<String>? colorHex,
       Value<int>? iconCode,
-      Value<DateTime>? createdAt}) {
+      Value<DateTime>? createdAt,
+      Value<String?>? userId,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? deletedAt,
+      Value<String>? syncStatus,
+      Value<int>? rowid}) {
     return CategoriesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       colorHex: colorHex ?? this.colorHex,
       iconCode: iconCode ?? this.iconCode,
       createdAt: createdAt ?? this.createdAt,
+      userId: userId ?? this.userId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -271,7 +420,7 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -285,6 +434,21 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
     return map;
   }
 
@@ -295,7 +459,12 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('name: $name, ')
           ..write('colorHex: $colorHex, ')
           ..write('iconCode: $iconCode, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -308,19 +477,15 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
   $HabitsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _categoryIdMeta =
       const VerificationMeta('categoryId');
   @override
-  late final GeneratedColumn<int> categoryId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
       'category_id', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.string,
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES categories (id)'));
@@ -415,6 +580,33 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -430,7 +622,11 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         colorHex,
         iconCode,
         isActive,
-        createdAt
+        createdAt,
+        userId,
+        updatedAt,
+        deletedAt,
+        syncStatus
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -444,6 +640,8 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('category_id')) {
       context.handle(
@@ -515,6 +713,24 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
     return context;
   }
 
@@ -525,9 +741,9 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Habit(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       categoryId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}category_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       description: attachedDatabase.typeMapping
@@ -552,6 +768,14 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
     );
   }
 
@@ -562,8 +786,8 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
 }
 
 class Habit extends DataClass implements Insertable<Habit> {
-  final int id;
-  final int categoryId;
+  final String id;
+  final String categoryId;
   final String name;
   final String description;
   final String frequencyType;
@@ -576,6 +800,10 @@ class Habit extends DataClass implements Insertable<Habit> {
   final int iconCode;
   final bool isActive;
   final DateTime createdAt;
+  final String? userId;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final String syncStatus;
   const Habit(
       {required this.id,
       required this.categoryId,
@@ -590,12 +818,16 @@ class Habit extends DataClass implements Insertable<Habit> {
       required this.colorHex,
       required this.iconCode,
       required this.isActive,
-      required this.createdAt});
+      required this.createdAt,
+      this.userId,
+      required this.updatedAt,
+      this.deletedAt,
+      required this.syncStatus});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['category_id'] = Variable<int>(categoryId);
+    map['id'] = Variable<String>(id);
+    map['category_id'] = Variable<String>(categoryId);
     map['name'] = Variable<String>(name);
     map['description'] = Variable<String>(description);
     map['frequency_type'] = Variable<String>(frequencyType);
@@ -614,6 +846,14 @@ class Habit extends DataClass implements Insertable<Habit> {
     map['icon_code'] = Variable<int>(iconCode);
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
     return map;
   }
 
@@ -637,6 +877,13 @@ class Habit extends DataClass implements Insertable<Habit> {
       iconCode: Value(iconCode),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
+      userId:
+          userId == null && nullToAbsent ? const Value.absent() : Value(userId),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      syncStatus: Value(syncStatus),
     );
   }
 
@@ -644,8 +891,8 @@ class Habit extends DataClass implements Insertable<Habit> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Habit(
-      id: serializer.fromJson<int>(json['id']),
-      categoryId: serializer.fromJson<int>(json['categoryId']),
+      id: serializer.fromJson<String>(json['id']),
+      categoryId: serializer.fromJson<String>(json['categoryId']),
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String>(json['description']),
       frequencyType: serializer.fromJson<String>(json['frequencyType']),
@@ -658,14 +905,18 @@ class Habit extends DataClass implements Insertable<Habit> {
       iconCode: serializer.fromJson<int>(json['iconCode']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      userId: serializer.fromJson<String?>(json['userId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'categoryId': serializer.toJson<int>(categoryId),
+      'id': serializer.toJson<String>(id),
+      'categoryId': serializer.toJson<String>(categoryId),
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String>(description),
       'frequencyType': serializer.toJson<String>(frequencyType),
@@ -678,12 +929,16 @@ class Habit extends DataClass implements Insertable<Habit> {
       'iconCode': serializer.toJson<int>(iconCode),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'userId': serializer.toJson<String?>(userId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'syncStatus': serializer.toJson<String>(syncStatus),
     };
   }
 
   Habit copyWith(
-          {int? id,
-          int? categoryId,
+          {String? id,
+          String? categoryId,
           String? name,
           String? description,
           String? frequencyType,
@@ -695,7 +950,11 @@ class Habit extends DataClass implements Insertable<Habit> {
           String? colorHex,
           int? iconCode,
           bool? isActive,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<String?> userId = const Value.absent(),
+          DateTime? updatedAt,
+          Value<DateTime?> deletedAt = const Value.absent(),
+          String? syncStatus}) =>
       Habit(
         id: id ?? this.id,
         categoryId: categoryId ?? this.categoryId,
@@ -712,6 +971,10 @@ class Habit extends DataClass implements Insertable<Habit> {
         iconCode: iconCode ?? this.iconCode,
         isActive: isActive ?? this.isActive,
         createdAt: createdAt ?? this.createdAt,
+        userId: userId.present ? userId.value : this.userId,
+        updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+        syncStatus: syncStatus ?? this.syncStatus,
       );
   Habit copyWithCompanion(HabitsCompanion data) {
     return Habit(
@@ -739,6 +1002,11 @@ class Habit extends DataClass implements Insertable<Habit> {
       iconCode: data.iconCode.present ? data.iconCode.value : this.iconCode,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
     );
   }
 
@@ -758,7 +1026,11 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('colorHex: $colorHex, ')
           ..write('iconCode: $iconCode, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus')
           ..write(')'))
         .toString();
   }
@@ -778,7 +1050,11 @@ class Habit extends DataClass implements Insertable<Habit> {
       colorHex,
       iconCode,
       isActive,
-      createdAt);
+      createdAt,
+      userId,
+      updatedAt,
+      deletedAt,
+      syncStatus);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -796,12 +1072,16 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.colorHex == this.colorHex &&
           other.iconCode == this.iconCode &&
           other.isActive == this.isActive &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.userId == this.userId &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.syncStatus == this.syncStatus);
 }
 
 class HabitsCompanion extends UpdateCompanion<Habit> {
-  final Value<int> id;
-  final Value<int> categoryId;
+  final Value<String> id;
+  final Value<String> categoryId;
   final Value<String> name;
   final Value<String> description;
   final Value<String> frequencyType;
@@ -814,6 +1094,11 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<int> iconCode;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
+  final Value<String?> userId;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<String> syncStatus;
+  final Value<int> rowid;
   const HabitsCompanion({
     this.id = const Value.absent(),
     this.categoryId = const Value.absent(),
@@ -829,10 +1114,15 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.iconCode = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   HabitsCompanion.insert({
-    this.id = const Value.absent(),
-    required int categoryId,
+    required String id,
+    required String categoryId,
     required String name,
     this.description = const Value.absent(),
     this.frequencyType = const Value.absent(),
@@ -845,11 +1135,17 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.iconCode = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
-  })  : categoryId = Value(categoryId),
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        categoryId = Value(categoryId),
         name = Value(name);
   static Insertable<Habit> custom({
-    Expression<int>? id,
-    Expression<int>? categoryId,
+    Expression<String>? id,
+    Expression<String>? categoryId,
     Expression<String>? name,
     Expression<String>? description,
     Expression<String>? frequencyType,
@@ -862,6 +1158,11 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<int>? iconCode,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
+    Expression<String>? userId,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? syncStatus,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -878,12 +1179,17 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (iconCode != null) 'icon_code': iconCode,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
+      if (userId != null) 'user_id': userId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   HabitsCompanion copyWith(
-      {Value<int>? id,
-      Value<int>? categoryId,
+      {Value<String>? id,
+      Value<String>? categoryId,
       Value<String>? name,
       Value<String>? description,
       Value<String>? frequencyType,
@@ -895,7 +1201,12 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       Value<String>? colorHex,
       Value<int>? iconCode,
       Value<bool>? isActive,
-      Value<DateTime>? createdAt}) {
+      Value<DateTime>? createdAt,
+      Value<String?>? userId,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? deletedAt,
+      Value<String>? syncStatus,
+      Value<int>? rowid}) {
     return HabitsCompanion(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
@@ -911,6 +1222,11 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       iconCode: iconCode ?? this.iconCode,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
+      userId: userId ?? this.userId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -918,10 +1234,10 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (categoryId.present) {
-      map['category_id'] = Variable<int>(categoryId.value);
+      map['category_id'] = Variable<String>(categoryId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -959,6 +1275,21 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
     return map;
   }
 
@@ -978,7 +1309,12 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('colorHex: $colorHex, ')
           ..write('iconCode: $iconCode, ')
           ..write('isActive: $isActive, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -992,19 +1328,15 @@ class $HabitLogsTable extends HabitLogs
   $HabitLogsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _habitIdMeta =
       const VerificationMeta('habitId');
   @override
-  late final GeneratedColumn<int> habitId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> habitId = GeneratedColumn<String>(
       'habit_id', aliasedName, false,
-      type: DriftSqlType.int,
+      type: DriftSqlType.string,
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES habits (id)'));
@@ -1033,6 +1365,14 @@ class $HabitLogsTable extends HabitLogs
   late final GeneratedColumn<String> note = GeneratedColumn<String>(
       'note', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _pointsAwardedMeta =
+      const VerificationMeta('pointsAwarded');
+  @override
+  late final GeneratedColumn<int> pointsAwarded = GeneratedColumn<int>(
+      'points_awarded', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1041,9 +1381,48 @@ class $HabitLogsTable extends HabitLogs
       type: DriftSqlType.dateTime,
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, habitId, loggedDate, isDone, value, note, createdAt];
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+      'user_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        habitId,
+        loggedDate,
+        isDone,
+        value,
+        note,
+        pointsAwarded,
+        createdAt,
+        userId,
+        updatedAt,
+        deletedAt,
+        syncStatus
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1056,6 +1435,8 @@ class $HabitLogsTable extends HabitLogs
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
     }
     if (data.containsKey('habit_id')) {
       context.handle(_habitIdMeta,
@@ -1083,9 +1464,33 @@ class $HabitLogsTable extends HabitLogs
       context.handle(
           _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
     }
+    if (data.containsKey('points_awarded')) {
+      context.handle(
+          _pointsAwardedMeta,
+          pointsAwarded.isAcceptableOrUnknown(
+              data['points_awarded']!, _pointsAwardedMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
     }
     return context;
   }
@@ -1101,9 +1506,9 @@ class $HabitLogsTable extends HabitLogs
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return HabitLog(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
       habitId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}habit_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}habit_id'])!,
       loggedDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}logged_date'])!,
       isDone: attachedDatabase.typeMapping
@@ -1112,8 +1517,18 @@ class $HabitLogsTable extends HabitLogs
           .read(DriftSqlType.double, data['${effectivePrefix}value']),
       note: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
+      pointsAwarded: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}points_awarded'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}user_id']),
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
     );
   }
 
@@ -1124,13 +1539,18 @@ class $HabitLogsTable extends HabitLogs
 }
 
 class HabitLog extends DataClass implements Insertable<HabitLog> {
-  final int id;
-  final int habitId;
+  final String id;
+  final String habitId;
   final DateTime loggedDate;
   final bool isDone;
   final double? value;
   final String? note;
+  final int pointsAwarded;
   final DateTime createdAt;
+  final String? userId;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  final String syncStatus;
   const HabitLog(
       {required this.id,
       required this.habitId,
@@ -1138,12 +1558,17 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
       required this.isDone,
       this.value,
       this.note,
-      required this.createdAt});
+      required this.pointsAwarded,
+      required this.createdAt,
+      this.userId,
+      required this.updatedAt,
+      this.deletedAt,
+      required this.syncStatus});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['habit_id'] = Variable<int>(habitId);
+    map['id'] = Variable<String>(id);
+    map['habit_id'] = Variable<String>(habitId);
     map['logged_date'] = Variable<DateTime>(loggedDate);
     map['is_done'] = Variable<bool>(isDone);
     if (!nullToAbsent || value != null) {
@@ -1152,7 +1577,16 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
     }
+    map['points_awarded'] = Variable<int>(pointsAwarded);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
     return map;
   }
 
@@ -1165,7 +1599,15 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
       value:
           value == null && nullToAbsent ? const Value.absent() : Value(value),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      pointsAwarded: Value(pointsAwarded),
       createdAt: Value(createdAt),
+      userId:
+          userId == null && nullToAbsent ? const Value.absent() : Value(userId),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      syncStatus: Value(syncStatus),
     );
   }
 
@@ -1173,37 +1615,52 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return HabitLog(
-      id: serializer.fromJson<int>(json['id']),
-      habitId: serializer.fromJson<int>(json['habitId']),
+      id: serializer.fromJson<String>(json['id']),
+      habitId: serializer.fromJson<String>(json['habitId']),
       loggedDate: serializer.fromJson<DateTime>(json['loggedDate']),
       isDone: serializer.fromJson<bool>(json['isDone']),
       value: serializer.fromJson<double?>(json['value']),
       note: serializer.fromJson<String?>(json['note']),
+      pointsAwarded: serializer.fromJson<int>(json['pointsAwarded']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      userId: serializer.fromJson<String?>(json['userId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'habitId': serializer.toJson<int>(habitId),
+      'id': serializer.toJson<String>(id),
+      'habitId': serializer.toJson<String>(habitId),
       'loggedDate': serializer.toJson<DateTime>(loggedDate),
       'isDone': serializer.toJson<bool>(isDone),
       'value': serializer.toJson<double?>(value),
       'note': serializer.toJson<String?>(note),
+      'pointsAwarded': serializer.toJson<int>(pointsAwarded),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'userId': serializer.toJson<String?>(userId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'syncStatus': serializer.toJson<String>(syncStatus),
     };
   }
 
   HabitLog copyWith(
-          {int? id,
-          int? habitId,
+          {String? id,
+          String? habitId,
           DateTime? loggedDate,
           bool? isDone,
           Value<double?> value = const Value.absent(),
           Value<String?> note = const Value.absent(),
-          DateTime? createdAt}) =>
+          int? pointsAwarded,
+          DateTime? createdAt,
+          Value<String?> userId = const Value.absent(),
+          DateTime? updatedAt,
+          Value<DateTime?> deletedAt = const Value.absent(),
+          String? syncStatus}) =>
       HabitLog(
         id: id ?? this.id,
         habitId: habitId ?? this.habitId,
@@ -1211,7 +1668,12 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
         isDone: isDone ?? this.isDone,
         value: value.present ? value.value : this.value,
         note: note.present ? note.value : this.note,
+        pointsAwarded: pointsAwarded ?? this.pointsAwarded,
         createdAt: createdAt ?? this.createdAt,
+        userId: userId.present ? userId.value : this.userId,
+        updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+        syncStatus: syncStatus ?? this.syncStatus,
       );
   HabitLog copyWithCompanion(HabitLogsCompanion data) {
     return HabitLog(
@@ -1222,7 +1684,15 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
       isDone: data.isDone.present ? data.isDone.value : this.isDone,
       value: data.value.present ? data.value.value : this.value,
       note: data.note.present ? data.note.value : this.note,
+      pointsAwarded: data.pointsAwarded.present
+          ? data.pointsAwarded.value
+          : this.pointsAwarded,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
     );
   }
 
@@ -1235,14 +1705,19 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
           ..write('isDone: $isDone, ')
           ..write('value: $value, ')
           ..write('note: $note, ')
-          ..write('createdAt: $createdAt')
+          ..write('pointsAwarded: $pointsAwarded, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, habitId, loggedDate, isDone, value, note, createdAt);
+  int get hashCode => Object.hash(id, habitId, loggedDate, isDone, value, note,
+      pointsAwarded, createdAt, userId, updatedAt, deletedAt, syncStatus);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1253,17 +1728,28 @@ class HabitLog extends DataClass implements Insertable<HabitLog> {
           other.isDone == this.isDone &&
           other.value == this.value &&
           other.note == this.note &&
-          other.createdAt == this.createdAt);
+          other.pointsAwarded == this.pointsAwarded &&
+          other.createdAt == this.createdAt &&
+          other.userId == this.userId &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt &&
+          other.syncStatus == this.syncStatus);
 }
 
 class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
-  final Value<int> id;
-  final Value<int> habitId;
+  final Value<String> id;
+  final Value<String> habitId;
   final Value<DateTime> loggedDate;
   final Value<bool> isDone;
   final Value<double?> value;
   final Value<String?> note;
+  final Value<int> pointsAwarded;
   final Value<DateTime> createdAt;
+  final Value<String?> userId;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<String> syncStatus;
+  final Value<int> rowid;
   const HabitLogsCompanion({
     this.id = const Value.absent(),
     this.habitId = const Value.absent(),
@@ -1271,26 +1757,45 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
     this.isDone = const Value.absent(),
     this.value = const Value.absent(),
     this.note = const Value.absent(),
+    this.pointsAwarded = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   HabitLogsCompanion.insert({
-    this.id = const Value.absent(),
-    required int habitId,
+    required String id,
+    required String habitId,
     required DateTime loggedDate,
     this.isDone = const Value.absent(),
     this.value = const Value.absent(),
     this.note = const Value.absent(),
+    this.pointsAwarded = const Value.absent(),
     this.createdAt = const Value.absent(),
-  })  : habitId = Value(habitId),
+    this.userId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        habitId = Value(habitId),
         loggedDate = Value(loggedDate);
   static Insertable<HabitLog> custom({
-    Expression<int>? id,
-    Expression<int>? habitId,
+    Expression<String>? id,
+    Expression<String>? habitId,
     Expression<DateTime>? loggedDate,
     Expression<bool>? isDone,
     Expression<double>? value,
     Expression<String>? note,
+    Expression<int>? pointsAwarded,
     Expression<DateTime>? createdAt,
+    Expression<String>? userId,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? syncStatus,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1299,18 +1804,30 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
       if (isDone != null) 'is_done': isDone,
       if (value != null) 'value': value,
       if (note != null) 'note': note,
+      if (pointsAwarded != null) 'points_awarded': pointsAwarded,
       if (createdAt != null) 'created_at': createdAt,
+      if (userId != null) 'user_id': userId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   HabitLogsCompanion copyWith(
-      {Value<int>? id,
-      Value<int>? habitId,
+      {Value<String>? id,
+      Value<String>? habitId,
       Value<DateTime>? loggedDate,
       Value<bool>? isDone,
       Value<double?>? value,
       Value<String?>? note,
-      Value<DateTime>? createdAt}) {
+      Value<int>? pointsAwarded,
+      Value<DateTime>? createdAt,
+      Value<String?>? userId,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? deletedAt,
+      Value<String>? syncStatus,
+      Value<int>? rowid}) {
     return HabitLogsCompanion(
       id: id ?? this.id,
       habitId: habitId ?? this.habitId,
@@ -1318,7 +1835,13 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
       isDone: isDone ?? this.isDone,
       value: value ?? this.value,
       note: note ?? this.note,
+      pointsAwarded: pointsAwarded ?? this.pointsAwarded,
       createdAt: createdAt ?? this.createdAt,
+      userId: userId ?? this.userId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1326,10 +1849,10 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<int>(id.value);
+      map['id'] = Variable<String>(id.value);
     }
     if (habitId.present) {
-      map['habit_id'] = Variable<int>(habitId.value);
+      map['habit_id'] = Variable<String>(habitId.value);
     }
     if (loggedDate.present) {
       map['logged_date'] = Variable<DateTime>(loggedDate.value);
@@ -1343,8 +1866,26 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
     if (note.present) {
       map['note'] = Variable<String>(note.value);
     }
+    if (pointsAwarded.present) {
+      map['points_awarded'] = Variable<int>(pointsAwarded.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -1358,7 +1899,13 @@ class HabitLogsCompanion extends UpdateCompanion<HabitLog> {
           ..write('isDone: $isDone, ')
           ..write('value: $value, ')
           ..write('note: $note, ')
-          ..write('createdAt: $createdAt')
+          ..write('pointsAwarded: $pointsAwarded, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('userId: $userId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -1379,18 +1926,28 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 }
 
 typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
-  Value<int> id,
+  required String id,
   required String name,
   Value<String> colorHex,
   Value<int> iconCode,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
-  Value<int> id,
+  Value<String> id,
   Value<String> name,
   Value<String> colorHex,
   Value<int> iconCode,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 
 final class $$CategoriesTableReferences
@@ -1405,7 +1962,7 @@ final class $$CategoriesTableReferences
 
   $$HabitsTableProcessedTableManager get habitsRefs {
     final manager = $$HabitsTableTableManager($_db, $_db.habits)
-        .filter((f) => f.categoryId.id.sqlEquals($_itemColumn<int>('id')!));
+        .filter((f) => f.categoryId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_habitsRefsTable($_db));
     return ProcessedTableManager(
@@ -1422,7 +1979,7 @@ class $$CategoriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -1436,6 +1993,18 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
 
   Expression<bool> habitsRefs(
       Expression<bool> Function($$HabitsTableFilterComposer f) f) {
@@ -1468,7 +2037,7 @@ class $$CategoriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -1482,6 +2051,18 @@ class $$CategoriesTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -1493,7 +2074,7 @@ class $$CategoriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -1507,6 +2088,18 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
 
   Expression<T> habitsRefs<T extends Object>(
       Expression<T> Function($$HabitsTableAnnotationComposer a) f) {
@@ -1553,11 +2146,16 @@ class $$CategoriesTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$CategoriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            Value<String> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> colorHex = const Value.absent(),
             Value<int> iconCode = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               CategoriesCompanion(
             id: id,
@@ -1565,13 +2163,23 @@ class $$CategoriesTableTableManager extends RootTableManager<
             colorHex: colorHex,
             iconCode: iconCode,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
+            required String id,
             required String name,
             Value<String> colorHex = const Value.absent(),
             Value<int> iconCode = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               CategoriesCompanion.insert(
             id: id,
@@ -1579,6 +2187,11 @@ class $$CategoriesTableTableManager extends RootTableManager<
             colorHex: colorHex,
             iconCode: iconCode,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
@@ -1626,8 +2239,8 @@ typedef $$CategoriesTableProcessedTableManager = ProcessedTableManager<
     Category,
     PrefetchHooks Function({bool habitsRefs})>;
 typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
-  Value<int> id,
-  required int categoryId,
+  required String id,
+  required String categoryId,
   required String name,
   Value<String> description,
   Value<String> frequencyType,
@@ -1640,10 +2253,15 @@ typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
   Value<int> iconCode,
   Value<bool> isActive,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
-  Value<int> id,
-  Value<int> categoryId,
+  Value<String> id,
+  Value<String> categoryId,
   Value<String> name,
   Value<String> description,
   Value<String> frequencyType,
@@ -1656,6 +2274,11 @@ typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
   Value<int> iconCode,
   Value<bool> isActive,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 
 final class $$HabitsTableReferences
@@ -1667,7 +2290,7 @@ final class $$HabitsTableReferences
           $_aliasNameGenerator(db.habits.categoryId, db.categories.id));
 
   $$CategoriesTableProcessedTableManager get categoryId {
-    final $_column = $_itemColumn<int>('category_id')!;
+    final $_column = $_itemColumn<String>('category_id')!;
 
     final manager = $$CategoriesTableTableManager($_db, $_db.categories)
         .filter((f) => f.id.sqlEquals($_column));
@@ -1684,7 +2307,7 @@ final class $$HabitsTableReferences
 
   $$HabitLogsTableProcessedTableManager get habitLogsRefs {
     final manager = $$HabitLogsTableTableManager($_db, $_db.habitLogs)
-        .filter((f) => f.habitId.id.sqlEquals($_itemColumn<int>('id')!));
+        .filter((f) => f.habitId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_habitLogsRefsTable($_db));
     return ProcessedTableManager(
@@ -1701,7 +2324,7 @@ class $$HabitsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -1739,6 +2362,18 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
 
   $$CategoriesTableFilterComposer get categoryId {
     final $$CategoriesTableFilterComposer composer = $composerBuilder(
@@ -1791,7 +2426,7 @@ class $$HabitsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
@@ -1833,6 +2468,18 @@ class $$HabitsTableOrderingComposer
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -1863,7 +2510,7 @@ class $$HabitsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -1901,6 +2548,18 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get categoryId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -1967,8 +2626,8 @@ class $$HabitsTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$HabitsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int> categoryId = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> categoryId = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> description = const Value.absent(),
             Value<String> frequencyType = const Value.absent(),
@@ -1981,6 +2640,11 @@ class $$HabitsTableTableManager extends RootTableManager<
             Value<int> iconCode = const Value.absent(),
             Value<bool> isActive = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               HabitsCompanion(
             id: id,
@@ -1997,10 +2661,15 @@ class $$HabitsTableTableManager extends RootTableManager<
             iconCode: iconCode,
             isActive: isActive,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required int categoryId,
+            required String id,
+            required String categoryId,
             required String name,
             Value<String> description = const Value.absent(),
             Value<String> frequencyType = const Value.absent(),
@@ -2013,6 +2682,11 @@ class $$HabitsTableTableManager extends RootTableManager<
             Value<int> iconCode = const Value.absent(),
             Value<bool> isActive = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               HabitsCompanion.insert(
             id: id,
@@ -2029,6 +2703,11 @@ class $$HabitsTableTableManager extends RootTableManager<
             iconCode: iconCode,
             isActive: isActive,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
@@ -2098,22 +2777,34 @@ typedef $$HabitsTableProcessedTableManager = ProcessedTableManager<
     Habit,
     PrefetchHooks Function({bool categoryId, bool habitLogsRefs})>;
 typedef $$HabitLogsTableCreateCompanionBuilder = HabitLogsCompanion Function({
-  Value<int> id,
-  required int habitId,
+  required String id,
+  required String habitId,
   required DateTime loggedDate,
   Value<bool> isDone,
   Value<double?> value,
   Value<String?> note,
+  Value<int> pointsAwarded,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 typedef $$HabitLogsTableUpdateCompanionBuilder = HabitLogsCompanion Function({
-  Value<int> id,
-  Value<int> habitId,
+  Value<String> id,
+  Value<String> habitId,
   Value<DateTime> loggedDate,
   Value<bool> isDone,
   Value<double?> value,
   Value<String?> note,
+  Value<int> pointsAwarded,
   Value<DateTime> createdAt,
+  Value<String?> userId,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
 });
 
 final class $$HabitLogsTableReferences
@@ -2124,7 +2815,7 @@ final class $$HabitLogsTableReferences
       .createAlias($_aliasNameGenerator(db.habitLogs.habitId, db.habits.id));
 
   $$HabitsTableProcessedTableManager get habitId {
-    final $_column = $_itemColumn<int>('habit_id')!;
+    final $_column = $_itemColumn<String>('habit_id')!;
 
     final manager = $$HabitsTableTableManager($_db, $_db.habits)
         .filter((f) => f.id.sqlEquals($_column));
@@ -2144,7 +2835,7 @@ class $$HabitLogsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
+  ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get loggedDate => $composableBuilder(
@@ -2159,8 +2850,23 @@ class $$HabitLogsTableFilterComposer
   ColumnFilters<String> get note => $composableBuilder(
       column: $table.note, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get pointsAwarded => $composableBuilder(
+      column: $table.pointsAwarded, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
 
   $$HabitsTableFilterComposer get habitId {
     final $$HabitsTableFilterComposer composer = $composerBuilder(
@@ -2192,7 +2898,7 @@ class $$HabitLogsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
+  ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get loggedDate => $composableBuilder(
@@ -2207,8 +2913,24 @@ class $$HabitLogsTableOrderingComposer
   ColumnOrderings<String> get note => $composableBuilder(
       column: $table.note, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get pointsAwarded => $composableBuilder(
+      column: $table.pointsAwarded,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+      column: $table.userId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
 
   $$HabitsTableOrderingComposer get habitId {
     final $$HabitsTableOrderingComposer composer = $composerBuilder(
@@ -2240,7 +2962,7 @@ class $$HabitLogsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
+  GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<DateTime> get loggedDate => $composableBuilder(
@@ -2255,8 +2977,23 @@ class $$HabitLogsTableAnnotationComposer
   GeneratedColumn<String> get note =>
       $composableBuilder(column: $table.note, builder: (column) => column);
 
+  GeneratedColumn<int> get pointsAwarded => $composableBuilder(
+      column: $table.pointsAwarded, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
 
   $$HabitsTableAnnotationComposer get habitId {
     final $$HabitsTableAnnotationComposer composer = $composerBuilder(
@@ -2302,13 +3039,19 @@ class $$HabitLogsTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$HabitLogsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            Value<int> habitId = const Value.absent(),
+            Value<String> id = const Value.absent(),
+            Value<String> habitId = const Value.absent(),
             Value<DateTime> loggedDate = const Value.absent(),
             Value<bool> isDone = const Value.absent(),
             Value<double?> value = const Value.absent(),
             Value<String?> note = const Value.absent(),
+            Value<int> pointsAwarded = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               HabitLogsCompanion(
             id: id,
@@ -2317,16 +3060,28 @@ class $$HabitLogsTableTableManager extends RootTableManager<
             isDone: isDone,
             value: value,
             note: note,
+            pointsAwarded: pointsAwarded,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           createCompanionCallback: ({
-            Value<int> id = const Value.absent(),
-            required int habitId,
+            required String id,
+            required String habitId,
             required DateTime loggedDate,
             Value<bool> isDone = const Value.absent(),
             Value<double?> value = const Value.absent(),
             Value<String?> note = const Value.absent(),
+            Value<int> pointsAwarded = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> userId = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
           }) =>
               HabitLogsCompanion.insert(
             id: id,
@@ -2335,7 +3090,13 @@ class $$HabitLogsTableTableManager extends RootTableManager<
             isDone: isDone,
             value: value,
             note: note,
+            pointsAwarded: pointsAwarded,
             createdAt: createdAt,
+            userId: userId,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (

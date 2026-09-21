@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_card.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -71,13 +72,16 @@ class DashboardScreen extends ConsumerWidget {
   SliverAppBar _buildAppBar(
       BuildContext context, WidgetRef ref, DateTime selectedDate) {
     final isToday = HabitDateUtils.isSameDay(selectedDate, DateTime.now());
+    final user = ref.watch(appUserProvider);
     return SliverAppBar(
       floating: true,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isToday ? 'วันนี้' : HabitDateUtils.formatDate(selectedDate),
+            isToday
+                ? (user != null ? 'สวัสดี ${user.username}' : 'วันนี้')
+                : HabitDateUtils.formatDate(selectedDate),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -91,6 +95,13 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       actions: [
+        if (user != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Center(
+              child: _TierBadge(tier: user.tier, points: user.weeklyPoints),
+            ),
+          ),
         if (!isToday)
           IconButton(
             icon: const Icon(Icons.today),
@@ -277,6 +288,39 @@ class DashboardScreen extends ConsumerWidget {
             child: const Text('บันทึก'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TierBadge extends StatelessWidget {
+  final String tier;
+  final int points;
+  const _TierBadge({required this.tier, required this.points});
+
+  static const _icon = {
+    'Bronze': '🥉',
+    'Silver': '🥈',
+    'Gold': '🥇',
+    'Platinum': '💎',
+    'Diamond': '🔷',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '${_icon[tier] ?? '🥉'} $points',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
       ),
     );
   }

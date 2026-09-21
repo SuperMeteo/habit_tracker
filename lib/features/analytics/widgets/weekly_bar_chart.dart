@@ -21,10 +21,13 @@ class WeeklyBarChart extends StatelessWidget {
       final log = logs.firstWhere(
         (l) => HabitDateUtils.isSameDay(l.loggedDate, day),
         orElse: () => HabitLog(
-          id: -1, habitId: habit.id,
+          id: '', habitId: habit.id,
           loggedDate: day, isDone: false,
           value: null, note: null,
           createdAt: day,
+          pointsAwarded: 0,
+          updatedAt: day,
+          syncStatus: 'synced',
         ),
       );
       return log.value ?? (log.isDone ? (habit.targetValue ?? 1) : 0.0);

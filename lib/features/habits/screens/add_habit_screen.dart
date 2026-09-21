@@ -26,7 +26,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   late final TextEditingController _unitCtrl;
   late final TextEditingController _targetValueCtrl;
 
-  int _categoryId = 1;
+  String _categoryId = '';
   String _frequencyType = 'daily';
   List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
   int _timesPerWeek = 3;
@@ -307,7 +307,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     );
   }
 
-  int _effectiveCategoryId(List<Category> cats) =>
+  String _effectiveCategoryId(List<Category> cats) =>
       cats.isEmpty || cats.any((c) => c.id == _categoryId)
           ? _categoryId
           : cats.first.id;

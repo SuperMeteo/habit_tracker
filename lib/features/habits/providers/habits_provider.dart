@@ -20,7 +20,7 @@ final categoriesProvider = StreamProvider<List<Category>>((ref) {
   return ref.watch(databaseProvider).watchAllCategories();
 });
 
-final categoryHabitCountsProvider = StreamProvider<Map<int, int>>((ref) {
+final categoryHabitCountsProvider = StreamProvider<Map<String, int>>((ref) {
   return ref.watch(databaseProvider).watchHabitCountsByCategory();
 });
 
@@ -127,12 +127,12 @@ class HabitActions {
     await _syncReminder(companion.id.value);
   }
 
-  Future<void> deleteHabit(int id) async {
+  Future<void> deleteHabit(String id) async {
     await _db.deleteHabit(id);
     await NotificationService.instance.cancelForHabit(id);
   }
 
-  Future<void> _syncReminder(int id) async {
+  Future<void> _syncReminder(String id) async {
     final habit = await _db.getHabit(id);
     if (habit == null) {
       await NotificationService.instance.cancelForHabit(id);
@@ -141,7 +141,7 @@ class HabitActions {
     }
   }
 
-  Future<void> toggleHabit(int habitId, DateTime date, bool? currentDone) async {
+  Future<void> toggleHabit(String habitId, DateTime date, bool? currentDone) async {
     final existing = await _db.getLogForHabitAndDate(habitId, date);
     if (existing != null) {
       await _db.upsertLog(HabitLogsCompanion(
@@ -160,7 +160,7 @@ class HabitActions {
   }
 
   Future<void> logNumericValue(
-      int habitId, DateTime date, double value) async {
+      String habitId, DateTime date, double value) async {
     final existing = await _db.getLogForHabitAndDate(habitId, date);
     await _db.upsertLog(HabitLogsCompanion(
       id: existing != null ? Value(existing.id) : const Value.absent(),

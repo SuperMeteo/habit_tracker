@@ -49,3 +49,9 @@ android/.kotlin/
 
 # ชุดแอปสำหรับส่งให้เพื่อน (สร้างใหม่ได้ด้วย สร้างชุดส่งเพื่อน.bat)
 dist/
+
+# Secret / local dev scripts (contains Supabase keys)
+run_dev.ps1
+run_dev.sh
+.env
+.env.local

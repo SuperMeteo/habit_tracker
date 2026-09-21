@@ -14,7 +14,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesProvider);
     final counts =
-        ref.watch(categoryHabitCountsProvider).valueOrNull ?? const <int, int>{};
+        ref.watch(categoryHabitCountsProvider).valueOrNull ?? const <String, int>{};
 
     return Scaffold(
       appBar: AppBar(title: const Text('จัดการหมวดหมู่')),
