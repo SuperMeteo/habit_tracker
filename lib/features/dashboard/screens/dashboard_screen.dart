@@ -6,7 +6,9 @@ import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/error_messages.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../habits/providers/habits_provider.dart';
-import '../widgets/habit_card.dart';
+import '../widgets/habit_grid_card.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/progress_ring.dart';
 import '../../../shared/widgets/empty_state.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -42,13 +44,7 @@ class DashboardScreen extends ConsumerWidget {
                 return Column(
                   children: [
                     _buildSummaryCard(context, done, items.length),
-                    ...items.map((item) => HabitCard(
-                          item: item,
-                          onToggle: () => actions.toggleHabit(
-                              item.habit.id, selectedDate, item.log?.isDone),
-                          onNumericTap: () =>
-                              _showNumericDialog(context, ref, item, actions, selectedDate),
-                        )),
+                    _buildGrid(context, ref, items, actions, selectedDate),
                     const SizedBox(height: 100),
                   ],
                 );
@@ -126,6 +122,96 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+
+
+  Future<void> _onToggle(
+    BuildContext context,
+    HabitActions actions,
+    HabitWithLog item,
+    DateTime date,
+  ) async {
+    final isDone = item.log?.isDone ?? false;
+    if (isDone) {
+      final ok = await _confirmUndo(context, item.habit.name);
+      if (!ok) return;
+    }
+    await actions.toggleHabit(item.habit.id, date, isDone);
+  }
+
+  Future<bool> _confirmUndo(BuildContext context, String name) async {
+    final theme = Theme.of(context);
+    final answer = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+        ),
+        icon: Icon(Icons.undo_rounded, color: theme.colorScheme.primary),
+        title: const Text('ยกเลิกที่ทำไว้?'),
+        content: Text(
+          '"$name" จะกลับไปเป็นยังไม่ได้ทำ และแต้มที่ได้จะถูกหักคืน',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('เก็บไว้เหมือนเดิม'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(120, 44),
+              backgroundColor: theme.colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('ยกเลิก'),
+          ),
+        ],
+      ),
+    );
+    return answer ?? false;
+  }
+
+  Widget _buildGrid(
+    BuildContext context,
+    WidgetRef ref,
+    List<HabitWithLog> items,
+    HabitActions actions,
+    DateTime selectedDate,
+  ) {
+    final width = MediaQuery.sizeOf(context).width;
+    final columns = width >= 1280
+        ? 4
+        : width >= 880
+            ? 3
+            : 2;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: items.length,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.82,
+        ),
+        itemBuilder: (_, i) {
+          final item = items[i];
+          return HabitGridCard(
+            item: item,
+            onToggle: () =>
+                _onToggle(context, actions, item, selectedDate),
+            onNumericTap: () =>
+                _showNumericDialog(context, ref, item, actions, selectedDate),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildDateStrip(
       BuildContext context, WidgetRef ref, DateTime selectedDate) {
     final today = HabitDateUtils.today();
@@ -194,18 +280,16 @@ class DashboardScreen extends ConsumerWidget {
   Widget _buildSummaryCard(BuildContext context, int done, int total) {
     final progress = total == 0 ? 0.0 : done / total;
     final theme = Theme.of(context);
+    final allDone = total > 0 && done == total;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 18, 18, 18),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primary,
-              theme.colorScheme.secondary,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
+          gradient: AppTheme.heroGradient(theme),
+          borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+          boxShadow: AppTheme.softShadow(theme),
         ),
         child: Row(
           children: [
@@ -218,34 +302,41 @@ class DashboardScreen extends ConsumerWidget {
                     style: theme.textTheme.labelMedium
                         ?.copyWith(color: Colors.white70),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
-                    '$done / $total',
+                    '$done จาก $total',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.white24,
-                      valueColor:
-                          const AlwaysStoppedAnimation(Colors.white),
-                      minHeight: 6,
-                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    allDone
+                        ? 'ครบทุกอย่างแล้ว เยี่ยมมาก'
+                        : total == 0
+                            ? 'ยังไม่มี Habit วันนี้'
+                            : 'เหลืออีก ${total - done} อย่าง',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: Colors.white70),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
-            Text(
-              '${(progress * 100).toStringAsFixed(0)}%',
-              style: theme.textTheme.headlineLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+            ProgressRing(
+              value: progress,
+              color: Colors.white,
+              trackColor: Colors.white24,
+              size: 86,
+              stroke: 9,
+              child: Text(
+                '${(progress * 100).toStringAsFixed(0)}%',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
