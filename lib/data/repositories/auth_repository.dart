@@ -36,6 +36,16 @@ class AppUserNotifier extends StateNotifier<AppUser?> {
     });
   }
 
+  /// ดึงโปรไฟล์ใหม่จาก server — เรียกหลัง sync เพื่อให้แต้ม/แรงค์บนจอตรงกับของจริง
+  Future<void> refresh() async {
+    final repo = _ref.read(authRepositoryProvider);
+    if (repo == null || state == null) return;
+    try {
+      final fresh = await repo.getCurrentUser();
+      if (fresh != null) state = fresh;
+    } catch (_) {}
+  }
+
   Future<void> signIn(String email, String password) async {
     final repo = _ref.read(authRepositoryProvider);
     if (repo == null) throw Exception('ไม่ได้เชื่อมต่อ Supabase');

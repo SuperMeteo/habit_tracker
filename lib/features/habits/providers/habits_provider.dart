@@ -5,6 +5,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/streak_calculator.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/sync/sync_service.dart';
 
 // ─── Database provider ─────────────────────────────────────────────────────
 
@@ -110,26 +111,33 @@ bool _isTargetDay(Habit habit, DateTime date) {
 // ─── Habit mutations ────────────────────────────────────────────────────────
 
 final habitActionsProvider = Provider<HabitActions>((ref) {
-  return HabitActions(ref.watch(databaseProvider));
+  return HabitActions(ref.watch(databaseProvider), ref);
 });
 
 class HabitActions {
   final AppDatabase _db;
-  HabitActions(this._db);
+  final Ref _ref;
+  HabitActions(this._db, this._ref);
+
+  void _scheduleSync() =>
+      _ref.read(syncServiceProvider.notifier).scheduleSync();
 
   Future<void> addHabit(HabitsCompanion companion) async {
     final id = await _db.insertHabit(companion);
     await _syncReminder(id);
+    _scheduleSync();
   }
 
   Future<void> updateHabit(HabitsCompanion companion) async {
     await _db.updateHabit(companion);
     await _syncReminder(companion.id.value);
+    _scheduleSync();
   }
 
   Future<void> deleteHabit(String id) async {
     await _db.deleteHabit(id);
     await NotificationService.instance.cancelForHabit(id);
+    _scheduleSync();
   }
 
   Future<void> _syncReminder(String id) async {
@@ -157,6 +165,7 @@ class HabitActions {
         isDone: const Value(true),
       ));
     }
+    _scheduleSync();
   }
 
   Future<void> logNumericValue(
@@ -169,5 +178,6 @@ class HabitActions {
       isDone: Value(value > 0),
       value: Value(value),
     ));
+    _scheduleSync();
   }
 }

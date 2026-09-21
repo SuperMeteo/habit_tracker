@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,13 +33,34 @@ class SyncService extends StateNotifier<SyncState> {
   final Ref _ref;
   static const _lastSyncKey = 'last_sync_at';
   bool _running = false;
+  bool _needsAnotherRound = false;
+  Timer? _debounce;
 
   SyncService(this._ref) : super(const SyncState());
+
+  /// ตั้งเวลาซิงก์แบบหน่วง — ติ๊กรัว ๆ หลายอันจะถูกรวบเป็นรอบเดียว
+  /// เงียบเสมอ: ถ้าออฟไลน์หรือยังไม่ login จะไม่ทำอะไรและไม่ฟ้อง
+  void scheduleSync({Duration delay = const Duration(seconds: 3)}) {
+    if (_ref.read(supabaseClientProvider) == null) return;
+    if (_ref.read(appUserProvider) == null) return;
+    _debounce?.cancel();
+    _debounce = Timer(delay, sync);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
 
   /// sync 2 ทาง: push แถวที่ค้าง → pull ของใหม่จาก server
   /// ปลอดภัยที่จะเรียกซ้ำ (กันรันซ้อนด้วย [_running])
   Future<void> sync() async {
-    if (_running) return;
+    // ติ๊กระหว่างรอบก่อนยังวิ่งอยู่ → จำไว้แล้วซิงก์อีกรอบให้ ไม่ทิ้งข้อมูลค้าง
+    if (_running) {
+      _needsAnotherRound = true;
+      return;
+    }
 
     final client = _ref.read(supabaseClientProvider);
     final user = _ref.read(appUserProvider);
@@ -61,10 +83,15 @@ class SyncService extends StateNotifier<SyncState> {
       final now = DateTime.now();
       await _saveLastSync(now);
       state = SyncState(status: SyncStatus.success, lastSyncAt: now);
+      await _ref.read(appUserProvider.notifier).refresh();
     } catch (e) {
       state = state.copyWith(status: SyncStatus.failed, message: '$e');
     } finally {
       _running = false;
+      if (_needsAnotherRound) {
+        _needsAnotherRound = false;
+        scheduleSync(delay: const Duration(seconds: 2));
+      }
     }
   }
 
