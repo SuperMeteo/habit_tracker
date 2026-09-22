@@ -7,6 +7,7 @@ import '../../../data/models/leaderboard_entry.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/leaderboard_repository.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/app_card.dart';
 
 class LeaderboardScreen extends ConsumerWidget {
   const LeaderboardScreen({super.key});
@@ -82,6 +83,7 @@ class LeaderboardScreen extends ConsumerWidget {
                 return RefreshIndicator(
                   onRefresh: () async => ref.invalidate(leaderboardProvider),
                   child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     itemCount: entries.length,
                     itemBuilder: (_, i) => _RankTile(
                       entry: entries[i],
@@ -117,8 +119,10 @@ class _RankTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      color: isMe ? theme.colorScheme.primaryContainer.withValues(alpha: 0.4) : null,
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.zero,
+      highlighted: isMe,
       child: ListTile(
         leading: SizedBox(
           width: 40,

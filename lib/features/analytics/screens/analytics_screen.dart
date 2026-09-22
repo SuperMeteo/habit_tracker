@@ -6,6 +6,7 @@ import '../widgets/streak_card.dart';
 import '../widgets/calendar_heatmap.dart';
 import '../widgets/weekly_bar_chart.dart';
 import '../../../shared/widgets/empty_state.dart';
+import '../../../shared/widgets/app_card.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
   const AnalyticsScreen({super.key});
@@ -30,7 +31,8 @@ class AnalyticsScreen extends ConsumerWidget {
           // Heatmap
           SliverToBoxAdapter(
             child: heatmapAsync.when(
-              data: (data) => Padding(
+              data: (data) => AppCard(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: CalendarHeatmap(
                     data: data,
@@ -55,17 +57,14 @@ class AnalyticsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Text('กราฟความคืบหน้า',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: SectionTitle('กราฟความคืบหน้า'),
                     ),
-                    ...numericStats.map((s) => Card(
+                    ...numericStats.map((s) => AppCard(
                           margin: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 6),
+                          padding: EdgeInsets.zero,
                           child: WeeklyBarChart(
                               habit: s.habit, logs: s.recentLogs),
                         )),
@@ -80,13 +79,9 @@ class AnalyticsScreen extends ConsumerWidget {
 
           // Streak cards
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Text('Streak รายละเอียด',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SectionTitle('Streak รายละเอียด'),
             ),
           ),
           statsAsync.when(

@@ -38,6 +38,9 @@ class WeeklyBarChart extends StatelessWidget {
       habit.targetValue ?? 1,
     ].reduce((a, b) => a > b ? a : b);
 
+    final todayIndex = days.indexWhere((d) => HabitDateUtils.isSameDay(d, today));
+    final todayValue = todayIndex >= 0 ? values[todayIndex] : 0.0;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -49,9 +52,24 @@ class WeeklyBarChart extends StatelessWidget {
                   style: theme.textTheme.titleSmall
                       ?.copyWith(fontWeight: FontWeight.bold)),
               const Spacer(),
-              Text('7 วันล่าสุด',
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: theme.colorScheme.outline)),
+              if (todayValue > 0)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'วันนี้ ${_fmt(todayValue)} ${habit.unit ?? ''}'.trim(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                        color: color, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                Text('7 วันล่าสุด',
+                    style: theme.textTheme.labelSmall
+                        ?.copyWith(color: theme.colorScheme.outline)),
             ],
           ),
         ),
@@ -149,7 +167,7 @@ class WeeklyBarChart extends StatelessWidget {
                         ),
                       ),
                     ],
-                    showingTooltipIndicators: isToday && val > 0 ? [0] : [],
+                    showingTooltipIndicators: const [],
                   );
                 }),
                 barTouchData: BarTouchData(
@@ -178,4 +196,7 @@ class WeeklyBarChart extends StatelessWidget {
       ],
     );
   }
+
+  static String _fmt(double v) =>
+      v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }

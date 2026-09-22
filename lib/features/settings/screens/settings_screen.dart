@@ -6,6 +6,7 @@ import '../widgets/export_sheet.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/sync/sync_service.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../shared/widgets/app_card.dart';
 
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>(
   (ref) => ThemeModeNotifier(),
@@ -42,47 +43,58 @@ class SettingsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('ตั้งค่า')),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
         children: [
           if (isOnline) ...[
-            _SectionHeader(label: 'บัญชีผู้ใช้'),
-            if (user != null)
-              _UserTile(
-                username: user.username,
-                email: user.email,
-                tier: user.tier,
-                totalPoints: user.totalPoints,
-                onLogout: () async {
-                  await ref.read(appUserProvider.notifier).signOut();
-                  if (context.mounted) context.go('/login');
-                },
-              )
-            else
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: const Text('ยังไม่ได้เข้าสู่ระบบ'),
-                subtitle: const Text('กดเพื่อ login / สมัครสมาชิก'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.go('/login'),
+            const SectionTitle('บัญชีผู้ใช้'),
+            AppCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  if (user != null)
+                    _UserTile(
+                      username: user.username,
+                      email: user.email,
+                      tier: user.tier,
+                      totalPoints: user.totalPoints,
+                      onLogout: () async {
+                        await ref.read(appUserProvider.notifier).signOut();
+                        if (context.mounted) context.go('/login');
+                      },
+                    )
+                  else
+                    ListTile(
+                      leading: const Icon(Icons.person_outline),
+                      title: const Text('ยังไม่ได้เข้าสู่ระบบ'),
+                      subtitle: const Text('กดเพื่อ login / สมัครสมาชิก'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/login'),
+                    ),
+                  if (user != null) ...[
+                    const Divider(height: 1),
+                    _SyncTile(
+                      state: ref.watch(syncServiceProvider),
+                      onSync: () =>
+                          ref.read(syncServiceProvider.notifier).sync(),
+                    ),
+                    if (user.isAdmin) ...[
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.admin_panel_settings_outlined),
+                        title: const Text('ระบบหลังบ้าน (Admin)'),
+                        subtitle: const Text('จัดการผู้ใช้และแต้ม'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/admin'),
+                      ),
+                    ],
+                  ],
+                ],
               ),
-            if (user != null) ...[
-              _SyncTile(
-                state: ref.watch(syncServiceProvider),
-                onSync: () => ref.read(syncServiceProvider.notifier).sync(),
-              ),
-              if (user.isAdmin)
-                ListTile(
-                  leading: const Icon(Icons.admin_panel_settings_outlined),
-                  title: const Text('ระบบหลังบ้าน (Admin)'),
-                  subtitle: const Text('จัดการผู้ใช้และแต้ม'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/admin'),
-                ),
-            ],
-            const Divider(),
+            ),
           ],
-          _SectionHeader(label: 'รูปแบบการแสดงผล'),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          const SectionTitle('รูปแบบการแสดงผล'),
+          AppCard(
+            padding: const EdgeInsets.all(12),
             child: SegmentedButton<ThemeMode>(
               segments: const [
                 ButtonSegment(
@@ -103,34 +115,45 @@ class SettingsScreen extends ConsumerWidget {
                   ref.read(themeModeProvider.notifier).set(s.first),
             ),
           ),
-          const Divider(),
-          _SectionHeader(label: 'Habit'),
-          ListTile(
-            leading: const Icon(Icons.list_alt),
-            title: const Text('จัดการ Habit ทั้งหมด'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/habits/manage'),
+          const SectionTitle('Habit'),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.list_alt),
+                  title: const Text('จัดการ Habit ทั้งหมด'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/habits/manage'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.category_outlined),
+                  title: const Text('จัดการหมวดหมู่'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('/categories/manage'),
+                ),
+              ],
+            ),
           ),
-          ListTile(
-            leading: const Icon(Icons.category_outlined),
-            title: const Text('จัดการหมวดหมู่'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/categories/manage'),
+          const SectionTitle('ข้อมูล'),
+          AppCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: const Icon(Icons.ios_share),
+              title: const Text('ส่งออกข้อมูล'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showExportSheet(context, ref),
+            ),
           ),
-          const Divider(),
-          _SectionHeader(label: 'ข้อมูล'),
-          ListTile(
-            leading: const Icon(Icons.ios_share),
-            title: const Text('ส่งออกข้อมูล'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => showExportSheet(context, ref),
-          ),
-          const Divider(),
-          _SectionHeader(label: 'เกี่ยวกับ'),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Habit Tracker'),
-            subtitle: const Text('v1.0.0'),
+          const SectionTitle('เกี่ยวกับ'),
+          const AppCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text('Habit Tracker'),
+              subtitle: Text('v1.0.0'),
+            ),
           ),
         ],
       ),
@@ -254,19 +277,3 @@ class _UserTile extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String label;
-  const _SectionHeader({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              )),
-    );
-  }
-}

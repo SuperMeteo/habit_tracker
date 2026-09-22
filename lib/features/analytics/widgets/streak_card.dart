@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../analytics/providers/analytics_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../habits/models/habit_icons.dart';
+import '../../../shared/widgets/app_card.dart';
 
 class StreakCard extends StatelessWidget {
   final HabitStats stats;
@@ -14,11 +15,10 @@ class StreakCard extends StatelessWidget {
     final unit =
         stats.habit.frequencyType == 'times_per_week' ? 'สัปดาห์' : 'วัน';
 
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      tint: color,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -76,7 +76,6 @@ class StreakCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
       ),
     );
   }
