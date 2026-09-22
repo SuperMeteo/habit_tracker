@@ -23,6 +23,7 @@ String friendlyError(Object? error) {
   if (error is PostgrestException) {
     final byCode = _postgrestByCode[error.code];
     if (byCode != null) return byCode;
+    if (_looksOutdatedSchema(error.message)) return _serverOutdated;
     return _authByText(error.message) ?? _passThroughThai(error.message) ?? _fallback;
   }
 
@@ -43,6 +44,16 @@ String? _passThroughThai(String message) {
       .hasMatch(msg);
   if (looksTechnical) return null;
   return msg;
+}
+
+// เซิร์ฟเวอร์ที่ยังไม่ได้รันไฟล์ SQL ล่าสุด จะตอบว่าไม่รู้จักคอลัมน์หรือฟังก์ชัน
+// ถ้าแปลเป็น "เกิดข้อผิดพลาด" ผู้ใช้จะไล่หาสาเหตุไม่เจอเลย
+bool _looksOutdatedSchema(String message) {
+  final s = message.toLowerCase();
+  return (s.contains('column') && s.contains('does not exist')) ||
+      s.contains('could not find') ||
+      (s.contains('function') && s.contains('does not exist')) ||
+      s.contains('schema cache');
 }
 
 bool _looksOffline(String raw) {
@@ -78,7 +89,16 @@ const _authByCode = <String, String>{
       'สมัครไม่สำเร็จ — ชื่อผู้ใช้นี้อาจมีคนใช้แล้ว ลองเปลี่ยนชื่อผู้ใช้',
 };
 
+const _serverOutdated =
+    'เซิร์ฟเวอร์ยังไม่ได้อัปเดต — เปิด Supabase → SQL Editor '
+    'แล้วรันไฟล์ในโฟลเดอร์ supabase/ ให้ครบก่อน';
+
 const _postgrestByCode = <String, String>{
+  'PGRST204': _serverOutdated,
+  'PGRST202': _serverOutdated,
+  '42703': _serverOutdated,
+  '42P01': _serverOutdated,
+  '42883': _serverOutdated,
   '23505': 'ข้อมูลนี้มีอยู่แล้ว ลองใช้ชื่ออื่น',
   '23503': 'ข้อมูลเชื่อมโยงไม่ครบ ลองซิงก์ข้อมูลใหม่อีกครั้ง',
   '23502': 'กรอกข้อมูลไม่ครบ',

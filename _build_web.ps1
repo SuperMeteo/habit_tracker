@@ -14,6 +14,13 @@ if ($flutter) {
   exit 1
 }
 
+# ล้างโฟลเดอร์ผลลัพธ์เก่าก่อนเสมอ
+# ถ้ามีของเก่าค้างอยู่ ขั้นคัดลอกฟอนต์จะถูกข้ามแบบเงียบ ๆ
+# ผลคือไอคอนทุกตัวในแอปกลายเป็นกล่องสี่เหลี่ยม
+if (Test-Path $outDir) {
+  Remove-Item -Recurse -Force $outDir -ErrorAction SilentlyContinue
+}
+
 $keysFile = Join-Path $PSScriptRoot '_keys.ps1'
 if (Test-Path $keysFile) {
   . $keysFile

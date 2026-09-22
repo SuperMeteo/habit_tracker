@@ -8,6 +8,8 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../habits/models/habit_icons.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_grid_card.dart';
+import '../widgets/score_reward_popup.dart';
+import '../../../core/database/app_database.dart';
 import '../../../core/scoring/score_calculator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/rank_badge.dart';
@@ -139,8 +141,54 @@ class DashboardScreen extends ConsumerWidget {
 
 
 
+  Future<ScoreResult> _snapshot(WidgetRef ref) async {
+    final db = ref.read(databaseProvider);
+    return ScoreCalculator.compute(
+      habits: await db.getAllHabits(),
+      logs: await db.getAllLogs(),
+      today: DateTime.now(),
+    );
+  }
+
+  Future<void> _withReward(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() action,
+  ) async {
+    final before = await _snapshot(ref);
+    await action();
+    final after = await _snapshot(ref);
+
+    if (!context.mounted) return;
+    final cats =
+        ref.read(categoriesProvider).valueOrNull ?? const <Category>[];
+    String nameOf(String id) {
+      for (final c in cats) {
+        if (c.id == id) return c.name;
+      }
+      return 'อื่น ๆ';
+    }
+
+    Color colorOf(String id) {
+      for (final c in cats) {
+        if (c.id == id) return AppTheme.parseHex(c.colorHex);
+      }
+      return Theme.of(context).colorScheme.primary;
+    }
+
+    final reward = buildReward(
+      before: before,
+      after: after,
+      nameOf: nameOf,
+      colorOf: colorOf,
+    );
+    if (reward == null || !context.mounted) return;
+    await showScoreReward(context, reward);
+  }
+
   Future<void> _onToggle(
     BuildContext context,
+    WidgetRef ref,
     HabitActions actions,
     HabitWithLog item,
     DateTime date,
@@ -148,9 +196,10 @@ class DashboardScreen extends ConsumerWidget {
     final isDone = item.log?.isDone ?? false;
     if (isDone) {
       final ok = await _confirmUndo(context, item.habit.name);
-      if (!ok) return;
+      if (!ok || !context.mounted) return;
     }
-    await actions.toggleHabit(item.habit.id, date, isDone);
+    await _withReward(context, ref,
+        () => actions.toggleHabit(item.habit.id, date, isDone));
   }
 
   Future<bool> _confirmUndo(BuildContext context, String name) async {
@@ -333,10 +382,10 @@ class DashboardScreen extends ConsumerWidget {
           return HabitGridCard(
             item: item,
             onToggle: () =>
-                _onToggle(context, actions, item, selectedDate),
+                _onToggle(context, ref, actions, item, selectedDate),
             onNumericTap: () =>
                 habitInputType(item.habit) == 'scale3'
-                    ? _showScaleSheet(context, item, actions, selectedDate)
+                    ? _showScaleSheet(context, ref, item, actions, selectedDate)
                     : _showNumericDialog(
                         context, ref, item, actions, selectedDate),
             onMenu: () => _showHabitMenu(context, ref, item, actions),
@@ -481,6 +530,7 @@ class DashboardScreen extends ConsumerWidget {
 
   Future<void> _showScaleSheet(
     BuildContext context,
+    WidgetRef ref,
     HabitWithLog item,
     HabitActions actions,
     DateTime date,
@@ -541,11 +591,12 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
 
-    if (picked == null) return;
+    if (picked == null || !context.mounted) return;
     if (picked == 0) {
       await actions.clearLog(item.habit.id, date);
     } else {
-      await actions.logScale(item.habit.id, date, picked);
+      await _withReward(context, ref,
+          () => actions.logScale(item.habit.id, date, picked));
     }
   }
 
@@ -581,10 +632,11 @@ class DashboardScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () {
               final value = double.tryParse(controller.text);
-              if (value != null) {
-                actions.logNumericValue(item.habit.id, date, value);
-              }
               Navigator.pop(ctx);
+              if (value != null) {
+                _withReward(context, ref,
+                    () => actions.logNumericValue(item.habit.id, date, value));
+              }
             },
             child: const Text('บันทึก'),
           ),
