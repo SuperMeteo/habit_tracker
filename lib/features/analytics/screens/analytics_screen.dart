@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/error_messages.dart';
 import '../providers/analytics_provider.dart';
+import '../widgets/score_panel.dart';
 import '../widgets/streak_card.dart';
 import '../widgets/calendar_heatmap.dart';
 import '../widgets/weekly_bar_chart.dart';
@@ -26,6 +27,13 @@ class AnalyticsScreen extends ConsumerWidget {
                     .textTheme
                     .headlineSmall
                     ?.copyWith(fontWeight: FontWeight.bold)),
+          ),
+
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 6),
+              child: ScorePanel(),
+            ),
           ),
 
           // Heatmap

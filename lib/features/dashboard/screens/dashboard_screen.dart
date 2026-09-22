@@ -8,7 +8,9 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../habits/models/habit_icons.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_grid_card.dart';
+import '../../../core/scoring/score_calculator.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/rank_badge.dart';
 import '../../../shared/widgets/progress_ring.dart';
 import '../../../shared/widgets/empty_state.dart';
 
@@ -108,13 +110,15 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       actions: [
-        if (user != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Center(
-              child: _TierBadge(tier: user.tier, points: user.weeklyPoints),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Center(
+            child: GestureDetector(
+              onTap: () => context.go('/analytics'),
+              child: _TierBadge(score: ref.watch(scoreProvider)),
             ),
           ),
+        ),
         if (!isToday)
           IconButton(
             icon: const Icon(Icons.today),
@@ -591,33 +595,35 @@ class DashboardScreen extends ConsumerWidget {
 }
 
 class _TierBadge extends StatelessWidget {
-  final String tier;
-  final int points;
-  const _TierBadge({required this.tier, required this.points});
-
-  static const _icon = {
-    'Bronze': '🥉',
-    'Silver': '🥈',
-    'Gold': '🥇',
-    'Platinum': '💎',
-    'Diamond': '🔷',
-  };
+  final ScoreResult score;
+  const _TierBadge({required this.score});
 
   @override
   Widget build(BuildContext context) {
+    final total = score.total;
+    final tier = ScoreCalculator.tierOf(total);
+    final info = tierInfo(tier);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(6, 3, 10, 3),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        color: info.gradient.last.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: info.gradient.last.withValues(alpha: 0.35)),
       ),
-      child: Text(
-        '${_icon[tier] ?? '🥉'} $points',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.onPrimaryContainer,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RankBadge(tier: tier, size: 22, showStars: false),
+          const SizedBox(width: 6),
+          Text(
+            '$total',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: info.gradient.last,
+            ),
+          ),
+        ],
       ),
     );
   }

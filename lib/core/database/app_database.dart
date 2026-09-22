@@ -341,6 +341,9 @@ class AppDatabase extends _$AppDatabase {
 
   // ─── Habit Logs ───────────────────────────────────────────────────────────
 
+  Stream<List<HabitLog>> watchAllLogs() =>
+      (select(habitLogs)..where((l) => l.deletedAt.isNull())).watch();
+
   Future<List<HabitLog>> getAllLogs() =>
       (select(habitLogs)..where((l) => l.deletedAt.isNull())).get();
 

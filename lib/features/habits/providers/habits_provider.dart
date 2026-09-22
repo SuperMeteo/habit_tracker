@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/scoring/score_calculator.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/streak_calculator.dart';
 import '../../../core/services/notification_service.dart';
@@ -56,6 +57,21 @@ final logsForSelectedWeekProvider = StreamProvider<List<HabitLog>>((ref) {
 });
 
 // ─── Combined habit + log for dashboard ───────────────────────────────────
+
+final allLogsProvider = StreamProvider<List<HabitLog>>((ref) {
+  return ref.watch(databaseProvider).watchAllLogs();
+});
+
+final scoreProvider = Provider<ScoreResult>((ref) {
+  final habits = ref.watch(allHabitsProvider).valueOrNull;
+  final logs = ref.watch(allLogsProvider).valueOrNull;
+  if (habits == null || logs == null) return ScoreResult.empty;
+  return ScoreCalculator.compute(
+    habits: habits,
+    logs: logs,
+    today: DateTime.now(),
+  );
+});
 
 String habitInputType(Habit h) {
   final t = h.inputType;

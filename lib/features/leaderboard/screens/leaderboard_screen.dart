@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../habits/providers/habits_provider.dart';
+import '../../../core/database/app_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/error_messages.dart';
@@ -75,6 +77,13 @@ class LeaderboardScreen extends ConsumerWidget {
               onSelectionChanged: (s) =>
                   ref.read(leaderboardModeProvider.notifier).state = s.first,
             ),
+          ),
+          _CategoryFilter(
+            selected: ref.watch(leaderboardCategoryProvider),
+            categories: ref.watch(categoriesProvider).valueOrNull ??
+                const <Category>[],
+            onChanged: (id) =>
+                ref.read(leaderboardCategoryProvider.notifier).state = id,
           ),
           _CategoryBoards(
             boards: ref.watch(categoryBoardsProvider),
@@ -303,5 +312,63 @@ class _RankTile extends StatelessWidget {
     return Text('${entry.rank}',
         style: theme.textTheme.titleMedium
             ?.copyWith(color: theme.colorScheme.outline));
+  }
+}
+
+class _CategoryFilter extends StatelessWidget {
+  final String? selected;
+  final List<Category> categories;
+  final ValueChanged<String?> onChanged;
+
+  const _CategoryFilter({
+    required this.selected,
+    required this.categories,
+    required this.onChanged,
+  });
+
+  String _nameOf(String id) {
+    for (final c in categories) {
+      if (c.id == id) return c.name;
+    }
+    return 'อื่น ๆ';
+  }
+
+  Color _colorOf(String id, ThemeData theme) {
+    for (final c in categories) {
+      if (c.id == id) return AppTheme.parseHex(c.colorHex);
+    }
+    return theme.colorScheme.primary;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: const Text('คะแนนรวม'),
+              selected: selected == null,
+              onSelected: (_) => onChanged(null),
+            ),
+          ),
+          for (final id in scoredCategoryIds)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(_nameOf(id)),
+                selected: selected == id,
+                selectedColor: _colorOf(id, theme).withValues(alpha: 0.2),
+                onSelected: (_) => onChanged(id),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }

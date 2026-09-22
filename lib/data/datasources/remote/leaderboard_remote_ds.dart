@@ -2,6 +2,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/category_leader.dart';
 import '../../models/leaderboard_entry.dart';
 
+String _day(DateTime d) =>
+    '${d.year.toString().padLeft(4, '0')}-'
+    '${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
 class LeaderboardRemoteDataSource {
   final SupabaseClient _client;
   LeaderboardRemoteDataSource(this._client);
@@ -10,10 +15,17 @@ class LeaderboardRemoteDataSource {
   Future<List<LeaderboardEntry>> fetch({
     required LeaderboardMode mode,
     int limit = 100,
+    String? categoryId,
+    DateTime? asOf,
   }) async {
     final data = await _client.rpc(
       'get_leaderboard',
-      params: {'mode': mode.value, 'lim': limit},
+      params: {
+        'mode': mode.value,
+        'lim': limit,
+        'as_of': _day(asOf ?? DateTime.now()),
+        if (categoryId != null) 'cat': categoryId,
+      },
     );
     if (data is! List) return [];
     return data
@@ -35,6 +47,7 @@ class LeaderboardRemoteDataSource {
         'mode': mode.value,
         'per_category': perCategory,
         'min_players': minPlayers,
+        'as_of': _day(DateTime.now()),
       },
     );
     if (data is! List) return [];

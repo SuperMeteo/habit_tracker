@@ -16,13 +16,17 @@ final leaderboardRepositoryProvider = Provider<LeaderboardRepository?>((ref) {
 final leaderboardModeProvider =
     StateProvider<LeaderboardMode>((ref) => LeaderboardMode.weekly);
 
+/// หมวดที่เลือกดูบนกระดานอันดับ — null = คะแนนรวมทุกด้าน
+final leaderboardCategoryProvider = StateProvider<String?>((ref) => null);
+
 /// รายการอันดับตามโหมดที่เลือก
 final leaderboardProvider =
     FutureProvider.autoDispose<List<LeaderboardEntry>>((ref) async {
   final repo = ref.watch(leaderboardRepositoryProvider);
   if (repo == null) return [];
   final mode = ref.watch(leaderboardModeProvider);
-  return repo.fetch(mode: mode);
+  final cat = ref.watch(leaderboardCategoryProvider);
+  return repo.fetch(mode: mode, categoryId: cat);
 });
 
 /// บอร์ดแยกด้าน — ชื่อและสีของหมวดมาจากฐานข้อมูลในเครื่อง
@@ -43,8 +47,9 @@ class LeaderboardRepository {
   Future<List<LeaderboardEntry>> fetch({
     required LeaderboardMode mode,
     int limit = 100,
+    String? categoryId,
   }) =>
-      _ds.fetch(mode: mode, limit: limit);
+      _ds.fetch(mode: mode, limit: limit, categoryId: categoryId);
 
   Future<List<CategoryBoard>> categoryBoards({
     required LeaderboardMode mode,
