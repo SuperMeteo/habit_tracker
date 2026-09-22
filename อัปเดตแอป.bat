@@ -5,7 +5,7 @@ title Habit Tracker - อัปเดต
 echo.
 echo   กำลังสร้างแอปเวอร์ชันใหม่ รอสัก 1-2 นาที...
 echo.
-call flutter build web --release
+powershell -NoProfile -ExecutionPolicy Bypass -File "_build_web.ps1"
 if errorlevel 1 (
   echo.
   echo   [X] สร้างไม่สำเร็จ ดูข้อความผิดพลาดด้านบน
