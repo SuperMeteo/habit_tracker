@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -27,6 +28,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   bool _loading = false;
   bool _obscure = true;
 
+  Timer? _nameDebounce;
+  String? _checkedName;
+  bool _checkingName = false;
+  bool? _nameFree;
+
   @override
   void initState() {
     super.initState();
@@ -45,7 +51,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     _emailSCtrl.dispose();
     _passSCtrl.dispose();
     _userCtrl.dispose();
+    _nameDebounce?.cancel();
     super.dispose();
+  }
+
+  void _onNameChanged(String raw) {
+    final name = raw.trim();
+    _nameDebounce?.cancel();
+    if (name.length < 3) {
+      if (_nameFree != null || _checkingName) {
+        setState(() {
+          _nameFree = null;
+          _checkingName = false;
+          _checkedName = null;
+        });
+      }
+      return;
+    }
+    _nameDebounce = Timer(const Duration(milliseconds: 600), () => _checkName(name));
+  }
+
+  Future<void> _checkName(String name) async {
+    final repo = ref.read(authRepositoryProvider);
+    if (repo == null) return;
+    setState(() => _checkingName = true);
+    try {
+      final free = await repo.isUsernameAvailable(name);
+      if (!mounted) return;
+      setState(() {
+        _checkedName = name;
+        _nameFree = free;
+        _checkingName = false;
+      });
+      _signupForm.currentState?.validate();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _checkingName = false;
+        _nameFree = null;
+        _checkedName = null;
+      });
+    }
   }
 
   Future<void> _login() async {
@@ -176,14 +222,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         child: Column(children: [
           TextFormField(
             controller: _userCtrl,
-            decoration: const InputDecoration(
+            onChanged: _onNameChanged,
+            decoration: InputDecoration(
               labelText: 'ชื่อผู้ใช้ *',
-              prefixIcon: Icon(Icons.person_outline),
-              border: OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.person_outline),
+              border: const OutlineInputBorder(),
+              suffixIcon: _nameSuffix(),
+              helperText: _nameHelper(),
+              helperStyle: TextStyle(
+                  color: Colors.green.shade700, fontWeight: FontWeight.w600),
             ),
             validator: (v) {
-              if (v == null || v.trim().isEmpty) return 'กรุณากรอกชื่อผู้ใช้';
-              if (v.trim().length < 3) return 'ต้องมีอย่างน้อย 3 ตัวอักษร';
+              final name = (v ?? '').trim();
+              if (name.isEmpty) return 'กรุณากรอกชื่อผู้ใช้';
+              if (name.length < 3) return 'ต้องมีอย่างน้อย 3 ตัวอักษร';
+              if (_checkedName == name && _nameFree == false) {
+                return 'ชื่อนี้มีคนใช้แล้ว ลองชื่ออื่น';
+              }
               return null;
             },
           ),
@@ -206,6 +261,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ]),
       );
+
+  Widget? _nameSuffix() {
+    if (_checkingName) {
+      return const Padding(
+        padding: EdgeInsets.all(14),
+        child: SizedBox(
+            height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+      );
+    }
+    if (_checkedName != _userCtrl.text.trim() || _nameFree == null) return null;
+    return Icon(
+      _nameFree! ? Icons.check_circle : Icons.cancel,
+      color: _nameFree! ? Colors.green : Theme.of(context).colorScheme.error,
+    );
+  }
+
+  String? _nameHelper() {
+    if (_checkedName == _userCtrl.text.trim() && _nameFree == true) {
+      return 'ใช้ชื่อนี้ได้';
+    }
+    return null;
+  }
 
   Widget _emailField(TextEditingController ctrl) => TextFormField(
         controller: ctrl,

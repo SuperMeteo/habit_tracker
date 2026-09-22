@@ -69,17 +69,44 @@ create table if not exists point_events (
 -- ============================================================================
 -- สร้าง profile อัตโนมัติเมื่อสมัคร
 -- ============================================================================
+-- ชื่อผู้ใช้ซ้ำเป็นเรื่องปกติที่ต้องเกิด ไม่ใช่ข้อยกเว้น
+-- ถ้าไม่วนหาชื่อว่าง insert จะชน unique constraint แล้ว trigger พัง
+-- ความพังจะย้อนไปทำให้ auth.signUp ล้มทั้งรายการ ผู้ใช้เห็นแค่
+-- "Database error saving new user" (500) ซึ่งไม่บอกอะไรเลย
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
+declare
+  base  text := coalesce(
+                  nullif(trim(new.raw_user_meta_data->>'username'), ''),
+                  'user_' || substr(new.id::text, 1, 8));
+  uname text := base;
+  n     int  := 0;
 begin
+  while exists (select 1 from public.profiles where lower(username) = lower(uname)) loop
+    n := n + 1;
+    uname := base || n::text;
+  end loop;
+
   insert into public.profiles (id, username, display_name)
   values (
     new.id,
-    coalesce(new.raw_user_meta_data->>'username', 'user_' || substr(new.id::text, 1, 8)),
-    new.raw_user_meta_data->>'display_name'
+    uname,
+    coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'), ''), base)
   );
   return new;
 end; $$;
+
+-- ให้แอปเช็กได้ก่อนกดสมัคร ว่าชื่อนี้ว่างไหม
+-- เทียบแบบไม่สนตัวพิมพ์เล็กใหญ่ กัน "Test" กับ "test" ที่คนสับสน
+-- ใช้ function ไม่ให้ query ตาราง profiles ตรง ๆ เพื่อไม่เปิดให้ไล่ดึงรายชื่อทั้งระบบ
+create or replace function username_available(name text)
+returns boolean language sql stable security definer as $$
+  select length(trim(coalesce(name, ''))) >= 3
+     and not exists (
+       select 1 from public.profiles
+       where lower(username) = lower(trim(name))
+     );
+$$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

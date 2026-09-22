@@ -79,4 +79,6 @@ class AuthRepository {
     required String username,
   }) => _ds.signUp(email: email, password: password, username: username);
   Future<void> signOut() => _ds.signOut();
+  Future<bool> isUsernameAvailable(String name) =>
+      _ds.isUsernameAvailable(name);
 }

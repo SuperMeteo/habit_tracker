@@ -17,6 +17,11 @@ class AuthRemoteDataSource {
 
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
 
+  Future<bool> isUsernameAvailable(String name) async {
+    final res = await _client.rpc('username_available', params: {'name': name});
+    return res == true;
+  }
+
   Future<AppUser> signUp({
     required String email,
     required String password,
