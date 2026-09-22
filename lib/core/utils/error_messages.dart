@@ -15,16 +15,34 @@ String friendlyError(Object? error) {
   if (error is AuthException) {
     final byCode = _authByCode[error.code];
     if (byCode != null) return byCode;
-    return _authByText(error.message) ?? _fallback;
+    return _authByText(error.message) ??
+        _passThroughThai(error.message) ??
+        _fallback;
   }
 
   if (error is PostgrestException) {
     final byCode = _postgrestByCode[error.code];
     if (byCode != null) return byCode;
-    return _authByText(error.message) ?? _fallback;
+    return _authByText(error.message) ?? _passThroughThai(error.message) ?? _fallback;
   }
 
   return _authByText(raw) ?? _fallback;
+}
+
+// ข้อความที่เราเขียนเองใน SQL (raise exception) เป็นภาษาไทยที่อ่านรู้เรื่องอยู่แล้ว
+// ถ้าไม่ปล่อยผ่าน จะถูกกลืนเป็น "เกิดข้อผิดพลาด ลองใหม่อีกครั้ง" ซึ่งแย่กว่าเดิม
+// เงื่อนไข: ต้องมีอักษรไทย และต้องไม่มีร่องรอยข้อความของระบบปนมา
+String? _passThroughThai(String message) {
+  final msg = message.trim();
+  if (msg.isEmpty || msg.length > 200) return null;
+  final hasThai = RegExp(r'[฀-๿]').hasMatch(msg);
+  if (!hasThai) return null;
+  final looksTechnical = RegExp(
+          r'Exception|statusCode|\{|\}|null|::|SQLSTATE|relation |column ',
+          caseSensitive: false)
+      .hasMatch(msg);
+  if (looksTechnical) return null;
+  return msg;
 }
 
 bool _looksOffline(String raw) {

@@ -87,6 +87,30 @@ void main() {
     });
   });
 
+  group('ข้อความไทยที่เราเขียนเองใน SQL', () {
+    test('ด่านล็อกอินของหน้าโปรไฟล์ → ส่งข้อความไทยผ่านไปตรง ๆ', () {
+      expect(
+        friendlyError(const PostgrestException(
+            message: 'ต้องเข้าสู่ระบบก่อนดูโปรไฟล์ผู้อื่น', code: 'P0001')),
+        'ต้องเข้าสู่ระบบก่อนดูโปรไฟล์ผู้อื่น',
+      );
+    });
+
+    test('ข้อความไทยที่มีร่องรอยระบบปนมา → ไม่ปล่อยผ่าน', () {
+      final msg = friendlyError(const PostgrestException(
+          message: 'ผิดพลาด: relation "habits" does not exist', code: 'XX000'));
+      expect(msg, 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง');
+    });
+
+    test('ข้อความอังกฤษที่ไม่รู้จัก → ไม่ปล่อยผ่าน', () {
+      expect(
+        friendlyError(const PostgrestException(
+            message: 'something odd happened', code: 'XX001')),
+        'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง',
+      );
+    });
+  });
+
   group('ทุกกรณีต้องไม่หลุดภาษาโปรแกรมเมอร์', () {
     final samples = <Object?>[
       null,
