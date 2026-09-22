@@ -21,6 +21,18 @@
 -- รันซ้ำได้ ไม่แตะข้อมูลเดิม
 -- ============================================================================
 
+-- ต้องลบฟังก์ชันรุ่นเก่าทิ้งก่อน
+-- เพราะรุ่นใหม่เพิ่มพารามิเตอร์ที่มีค่าเริ่มต้น (as_of, cat)
+-- ถ้าปล่อยรุ่นเก่าไว้ Postgres จะเจอสองตัวที่เรียกด้วยจำนวนอาร์กิวเมนต์เดิมได้ทั้งคู่
+-- แล้วตอบว่า "function is not unique" ซึ่งทำให้หน้าอันดับพังทั้งที่รัน SQL แล้ว
+drop function if exists get_leaderboard(text, int);
+drop function if exists get_leaderboard(text, int, date, uuid);
+drop function if exists get_category_leaders(text, int, int);
+drop function if exists get_category_leaders(text, int, int, date);
+drop function if exists get_user_scores(uuid, date, text);
+drop function if exists get_user_total_points(uuid, date, text);
+drop function if exists calc_category_points(uuid, uuid, date, date);
+
 create or replace function scored_category_ids()
 returns uuid[] language sql immutable as $$
   select array[
@@ -43,7 +55,7 @@ $$;
 -- คะแนนของผู้ใช้ 1 คนในหมวด 1 หมวด
 -- from_day = null → เริ่มนับจากวันแรกที่เคยทำ (โหมดตลอดกาล)
 -- from_day มีค่า   → นับเฉพาะช่วงนั้น (ใช้ทำโหมดสัปดาห์นี้)
-create or replace function calc_category_points(
+create function calc_category_points(
   uid      uuid,
   cat      uuid,
   as_of    date,
@@ -112,7 +124,7 @@ begin
 end; $$;
 
 -- คะแนนแยก 4 ด้านของผู้ใช้คนหนึ่ง (แอปเรียกมาวาดหลอดคะแนน)
-create or replace function get_user_scores(
+create function get_user_scores(
   target_user uuid default null,
   as_of       date default current_date,
   mode        text default 'alltime'
@@ -138,7 +150,7 @@ begin
   end loop;
 end; $$;
 
-create or replace function get_user_total_points(
+create function get_user_total_points(
   target_user uuid,
   as_of       date default current_date,
   mode        text default 'alltime'
@@ -152,7 +164,7 @@ $$;
 -- กระดานอันดับ — คะแนนรวม และเลือกดูเฉพาะด้านได้
 -- category ว่าง = รวมทุกด้าน · มีค่า = เฉพาะด้านนั้น
 -- ============================================================================
-create or replace function get_leaderboard(
+create function get_leaderboard(
   mode  text default 'alltime',
   lim   int  default 100,
   as_of date default current_date,
@@ -182,7 +194,7 @@ language sql stable security definer as $$
 $$;
 
 -- แชมป์แต่ละด้าน — ใช้คะแนนสูตรใหม่แทนการบวกแต้มดิบ
-create or replace function get_category_leaders(
+create function get_category_leaders(
   mode         text default 'alltime',
   per_category int  default 3,
   min_players  int  default 2,
