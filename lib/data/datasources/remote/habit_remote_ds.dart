@@ -10,6 +10,24 @@ class HabitRemoteDataSource {
 
   String get _uid => _client.auth.currentUser!.id;
 
+  // ─── Categories ───────────────────────────────────────────────────────────
+
+  // upsert ชี้ conflict ที่ (user_id, id) เพราะกุญแจหลักบนเซิร์ฟเวอร์เป็นคู่
+  // หมวดตั้งต้นใช้ UUID เดียวกันทุกคน ถ้าชนที่ id เดี่ยวจะไปทับแถวคนอื่น
+  Future<void> pushCategories(List<Map<String, dynamic>> rows) async {
+    if (rows.isEmpty) return;
+    await _client.from('categories').upsert(rows, onConflict: 'user_id,id');
+  }
+
+  Future<List<Map<String, dynamic>>> pullCategories(DateTime? since) async {
+    var query = _client.from('categories').select().eq('user_id', _uid);
+    if (since != null) {
+      query = query.gt('updated_at', since.toUtc().toIso8601String());
+    }
+    final data = await query;
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
   // ─── Habits ───────────────────────────────────────────────────────────────
 
   Future<void> pushHabits(List<Map<String, dynamic>> rows) async {

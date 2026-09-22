@@ -341,6 +341,21 @@ class AppDatabase extends _$AppDatabase {
 
   // ─── Sync support ─────────────────────────────────────────────────────────
 
+  Future<List<Category>> getPendingCategories() =>
+      (select(categories)..where((c) => c.syncStatus.equals('pending'))).get();
+
+  Future<void> markCategoriesSynced(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await (update(categories)..where((c) => c.id.isIn(ids)))
+        .write(const CategoriesCompanion(syncStatus: Value('synced')));
+  }
+
+  Future<void> applyRemoteCategory(CategoriesCompanion row) =>
+      into(categories).insertOnConflictUpdate(row);
+
+  Future<Category?> findCategoryById(String id) =>
+      (select(categories)..where((c) => c.id.equals(id))).getSingleOrNull();
+
   /// แถวที่ยังไม่ได้ push ขึ้น server (รวมแถวที่ถูก soft-delete ด้วย)
   Future<List<Habit>> getPendingHabits() =>
       (select(habits)..where((h) => h.syncStatus.equals('pending'))).get();
@@ -362,6 +377,13 @@ class AppDatabase extends _$AppDatabase {
 
   /// ผูกข้อมูลที่สร้างตอนเป็น guest (userId = null) เข้ากับบัญชีที่เพิ่ง login
   Future<void> claimGuestData(String userId) async {
+    await (update(categories)..where((c) => c.userId.isNull())).write(
+      CategoriesCompanion(
+        userId: Value(userId),
+        syncStatus: const Value('pending'),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
     await (update(habits)..where((h) => h.userId.isNull())).write(
       HabitsCompanion(
         userId: Value(userId),

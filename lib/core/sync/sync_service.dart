@@ -100,6 +100,15 @@ class SyncService extends StateNotifier<SyncState> {
 
   Future<void> _push(
       AppDatabase db, HabitRemoteDataSource remote, String uid) async {
+    // ส่งหมวดขึ้นก่อน habit เสมอ เพราะ habit อ้างถึง category_id
+    // ถ้าสลับลำดับ ตอนเครื่องอื่น pull มาจะเจอ habit ที่ชี้หมวดที่ยังไม่มี
+    final cats = await db.getPendingCategories();
+    if (cats.isNotEmpty) {
+      await remote
+          .pushCategories(cats.map((c) => _categoryToRow(c, uid)).toList());
+      await db.markCategoriesSynced(cats.map((c) => c.id).toList());
+    }
+
     final habits = await db.getPendingHabits();
     if (habits.isNotEmpty) {
       await remote.pushHabits(habits.map((h) => _habitToRow(h, uid)).toList());
@@ -112,6 +121,16 @@ class SyncService extends StateNotifier<SyncState> {
       await db.markLogsSynced(logs.map((l) => l.id).toList());
     }
   }
+
+  Map<String, dynamic> _categoryToRow(Category c, String uid) => {
+        'id': c.id,
+        'user_id': uid,
+        'name': c.name,
+        'color_hex': c.colorHex,
+        'icon_code': c.iconCode,
+        'updated_at': c.updatedAt.toUtc().toIso8601String(),
+        'deleted_at': c.deletedAt?.toUtc().toIso8601String(),
+      };
 
   Map<String, dynamic> _habitToRow(Habit h, String uid) => {
         'id': h.id,
@@ -148,6 +167,26 @@ class SyncService extends StateNotifier<SyncState> {
 
   Future<void> _pull(
       AppDatabase db, HabitRemoteDataSource remote, DateTime? since) async {
+    for (final row in await remote.pullCategories(since)) {
+      final incoming = _parseDate(row['updated_at']);
+      final local = await db.findCategoryById(row['id'] as String);
+      if (local != null &&
+          incoming != null &&
+          local.updatedAt.isAfter(incoming)) {
+        continue;
+      }
+      await db.applyRemoteCategory(CategoriesCompanion(
+        id: Value(row['id'] as String),
+        name: Value(row['name'] as String? ?? 'ไม่มีชื่อ'),
+        colorHex: Value(row['color_hex'] as String? ?? '#6366F1'),
+        iconCode: Value((row['icon_code'] as num?)?.toInt() ?? 0xe532),
+        userId: Value(row['user_id'] as String?),
+        updatedAt: Value(incoming ?? DateTime.now()),
+        deletedAt: Value(_parseDate(row['deleted_at'])),
+        syncStatus: const Value('synced'),
+      ));
+    }
+
     for (final row in await remote.pullHabits(since)) {
       final incoming = _parseDate(row['updated_at']);
       final local = await db.findHabitById(row['id'] as String);
