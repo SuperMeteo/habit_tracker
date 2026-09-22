@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../models/category_leader.dart';
 import '../../models/leaderboard_entry.dart';
 
 class LeaderboardRemoteDataSource {
@@ -18,6 +19,28 @@ class LeaderboardRemoteDataSource {
     return data
         .cast<Map<String, dynamic>>()
         .map(LeaderboardEntry.fromJson)
+        .toList();
+  }
+
+  /// เรียก get_category_leaders — ได้แค่รหัสหมวด ไม่มีชื่อหมวด
+  /// ชื่อหมวดให้ชั้น repository เอาจากฐานข้อมูลในเครื่องมาใส่
+  Future<List<CategoryLeader>> fetchCategoryLeaders({
+    required LeaderboardMode mode,
+    int perCategory = 3,
+    int minPlayers = 2,
+  }) async {
+    final data = await _client.rpc(
+      'get_category_leaders',
+      params: {
+        'mode': mode.value,
+        'per_category': perCategory,
+        'min_players': minPlayers,
+      },
+    );
+    if (data is! List) return [];
+    return data
+        .cast<Map<String, dynamic>>()
+        .map(CategoryLeader.fromJson)
         .toList();
   }
 }

@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/error_messages.dart';
 import '../../../core/supabase/supabase_config.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../data/models/category_leader.dart';
 import '../../../data/models/leaderboard_entry.dart';
+import '../../habits/models/habit_icons.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/leaderboard_repository.dart';
 import '../../../shared/widgets/empty_state.dart';
@@ -53,7 +56,10 @@ class LeaderboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'รีเฟรช',
-            onPressed: () => ref.invalidate(leaderboardProvider),
+            onPressed: () {
+              ref.invalidate(leaderboardProvider);
+              ref.invalidate(categoryBoardsProvider);
+            },
           ),
         ],
       ),
@@ -69,6 +75,10 @@ class LeaderboardScreen extends ConsumerWidget {
               onSelectionChanged: (s) =>
                   ref.read(leaderboardModeProvider.notifier).state = s.first,
             ),
+          ),
+          _CategoryBoards(
+            boards: ref.watch(categoryBoardsProvider),
+            myUserId: user.id,
           ),
           Expanded(
             child: boardAsync.when(
@@ -106,6 +116,126 @@ class LeaderboardScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CategoryBoards extends StatelessWidget {
+  final AsyncValue<List<CategoryBoard>> boards;
+  final String myUserId;
+  const _CategoryBoards({required this.boards, required this.myUserId});
+
+  @override
+  Widget build(BuildContext context) {
+    final list = boards.valueOrNull ?? const <CategoryBoard>[];
+    if (list.isEmpty) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: SectionTitle('แชมป์แต่ละด้าน'),
+        ),
+        SizedBox(
+          height: 128,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: list.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) => _BoardCard(
+              board: list[i],
+              isMine: list[i].champion?.userId == myUserId,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: Text('อันดับรวมทุกด้าน',
+              style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w800)),
+        ),
+      ],
+    );
+  }
+}
+
+class _BoardCard extends StatelessWidget {
+  final CategoryBoard board;
+  final bool isMine;
+  const _BoardCard({required this.board, required this.isMine});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = AppTheme.parseHex(board.colorHex);
+    final champ = board.champion;
+
+    return SizedBox(
+      width: 196,
+      child: AppCard(
+        padding: const EdgeInsets.all(14),
+        tint: color,
+        highlighted: isMine,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(HabitIcons.fromCode(board.iconCode),
+                      color: color, size: 17),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(board.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w800)),
+                ),
+              ],
+            ),
+            const Spacer(),
+            if (champ == null)
+              Text('ยังไม่มีใครทำ',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.outline))
+            else ...[
+              Row(
+                children: [
+                  const Text('🥇', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(champ.username,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700, color: color)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text('${champ.points} แต้ม ${champ.emoji}',
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+            ],
+            const Spacer(),
+            Text('แข่งกัน ${board.players} คน',
+                style: theme.textTheme.labelSmall
+                    ?.copyWith(color: theme.colorScheme.outline)),
+          ],
+        ),
       ),
     );
   }
