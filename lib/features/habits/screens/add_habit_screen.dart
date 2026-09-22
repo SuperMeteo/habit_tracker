@@ -86,6 +86,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       _isNumeric = template.isNumeric;
       _colorHex = template.colorHex;
       _iconCode = template.iconCode;
+      if (scoredCategoryIds.contains(template.categoryKey)) {
+        _categoryId = template.categoryKey;
+      }
       if (template.isNumeric) {
         _targetValueCtrl.text =
             template.targetValue?.toStringAsFixed(0) ?? '';

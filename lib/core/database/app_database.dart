@@ -10,12 +10,18 @@ part 'app_database.g.dart';
 const _uuid = Uuid();
 
 const defaultCategoryIds = {
-  'สุขภาพ': '11111111-1111-4111-8111-111111111101',
-  'ผลิตภาพ': '11111111-1111-4111-8111-111111111102',
-  'การเงิน': '11111111-1111-4111-8111-111111111103',
-  'การเรียนรู้': '11111111-1111-4111-8111-111111111104',
-  'อื่นๆ': '11111111-1111-4111-8111-111111111105',
+  'ร่างกาย': '11111111-1111-4111-8111-111111111101',
+  'การกิน': '11111111-1111-4111-8111-111111111106',
+  'การนอน': '11111111-1111-4111-8111-111111111107',
+  'จิตใจ': '11111111-1111-4111-8111-111111111108',
 };
+
+const scoredCategoryIds = [
+  '11111111-1111-4111-8111-111111111101',
+  '11111111-1111-4111-8111-111111111106',
+  '11111111-1111-4111-8111-111111111107',
+  '11111111-1111-4111-8111-111111111108',
+];
 
 @DriftDatabase(tables: [Categories, Habits, HabitLogs])
 class AppDatabase extends _$AppDatabase {
@@ -24,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -35,6 +41,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await _migrateIntIdsToUuid(m);
+          }
+          if (from < 3) {
+            await _migrateToFourCategories();
           }
         },
         beforeOpen: (details) async {
@@ -119,13 +128,60 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  Future<void> migrateToFourCategoriesForTest() => _migrateToFourCategories();
+
+  Future<void> _migrateToFourCategories() async {
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final keep = scoredCategoryIds.map((e) => "'$e'").join(',');
+
+    await customStatement(
+      "UPDATE categories SET name = 'ร่างกาย', color_hex = '#EF4444', "
+      "icon_code = ${0xe28d}, deleted_at = NULL, updated_at = ?, "
+      "sync_status = 'pending' WHERE id = '${scoredCategoryIds[0]}'",
+      [now],
+    );
+
+    final existing = await getAllCategories();
+    final haveIds = existing.map((c) => c.id).toSet();
+    for (final (name, color, icon) in [
+      ('ร่างกาย', '#EF4444', 0xe28d),
+      ('การกิน', '#F59E0B', 0xe532),
+      ('การนอน', '#6366F1', 0xe0db),
+      ('จิตใจ', '#10B981', 0xe56f),
+    ]) {
+      final id = defaultCategoryIds[name]!;
+      if (haveIds.contains(id)) continue;
+      await into(categories).insert(
+        CategoriesCompanion.insert(
+          id: id,
+          name: name,
+          colorHex: Value(color),
+          iconCode: Value(icon),
+        ),
+        mode: InsertMode.insertOrReplace,
+      );
+    }
+
+    await customStatement(
+      "UPDATE habits SET category_id = '${scoredCategoryIds[0]}', "
+      "updated_at = ?, sync_status = 'pending' "
+      "WHERE category_id NOT IN ($keep)",
+      [now],
+    );
+
+    await customStatement(
+      "UPDATE categories SET deleted_at = ?, updated_at = ?, "
+      "sync_status = 'pending' WHERE id NOT IN ($keep) AND deleted_at IS NULL",
+      [now, now],
+    );
+  }
+
   Future<void> _insertDefaultCategories() async {
     final defaults = [
-      ('สุขภาพ', '#EF4444', 0xe3a3),
-      ('ผลิตภาพ', '#8B5CF6', 0xe8d5),
-      ('การเงิน', '#10B981', 0xe8e5),
-      ('การเรียนรู้', '#F59E0B', 0xe865),
-      ('อื่นๆ', '#6366F1', 0xe7f7),
+      ('ร่างกาย', '#EF4444', 0xe28d),
+      ('การกิน', '#F59E0B', 0xe532),
+      ('การนอน', '#6366F1', 0xe0db),
+      ('จิตใจ', '#10B981', 0xe56f),
     ];
     for (final (name, color, icon) in defaults) {
       await into(categories).insert(CategoriesCompanion.insert(

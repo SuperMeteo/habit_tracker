@@ -24,13 +24,13 @@ void main() {
   });
 
   test('แก้ชื่อหมวดตั้งต้น → กลับมาเป็นรอส่ง (จะได้ไปอัปเดตบนคลาวด์)', () async {
-    final health = await idOf('สุขภาพ');
-    await db.updateCategory(health, 'ร่างกาย', '#EF4444');
+    final health = await idOf('ร่างกาย');
+    await db.updateCategory(health, 'ร่างกายแข็งแรง', '#EF4444');
     expect((await db.getPendingCategories()).single.id, health);
   });
 
   test('ลบหมวด → ยังส่งขึ้นคลาวด์ได้ เพื่อให้เครื่องอื่นลบตาม', () async {
-    final money = await idOf('การเงิน');
+    final money = await idOf('การกิน');
     expect(await db.deleteCategory(money), CategoryDeleteResult.deleted);
     final pending = await db.getPendingCategories();
     expect(pending.single.id, money);
@@ -60,11 +60,11 @@ void main() {
     expect(found!.name, 'งานอดิเรก');
     expect(found.userId, 'user-1');
     expect(await db.getPendingCategories(), isEmpty);
-    expect((await db.getAllCategories()).length, 6);
+    expect((await db.getAllCategories()).length, 5);
   });
 
   test('รับหมวดเดิมจากคลาวด์อีกครั้ง → ทับของเก่า ไม่เพิ่มแถวซ้ำ', () async {
-    final health = await idOf('สุขภาพ');
+    final health = await idOf('ร่างกาย');
     await db.applyRemoteCategory(CategoriesCompanion(
       id: Value(health),
       name: const Value('ร่างกาย'),
@@ -73,7 +73,7 @@ void main() {
       updatedAt: Value(DateTime(2026, 9, 22)),
       syncStatus: const Value('synced'),
     ));
-    expect((await db.getAllCategories()).length, 5);
+    expect((await db.getAllCategories()).length, 4);
     expect((await db.findCategoryById(health))!.name, 'ร่างกาย');
   });
 

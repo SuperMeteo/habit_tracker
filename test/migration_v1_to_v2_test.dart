@@ -76,27 +76,24 @@ void main() {
     raw.dispose();
   }
 
-  test('อัปเกรด v1 → v2 ข้อมูลเดิมอยู่ครบ และคู่ habit ↔ log ↔ หมวด ถูกต้อง',
+  test('อัปเกรด v1 → v3 ข้อมูลเดิมอยู่ครบ และ habit เก่าย้ายเข้าหมวดร่างกาย',
       () async {
     seedV1();
     final db = AppDatabase.forTesting(NativeDatabase(file));
 
     final cats = await db.getAllCategories();
-    expect(cats.map((c) => c.name).toSet(), {'สุขภาพ', 'การเงิน'});
+    expect(cats.map((c) => c.name).toSet(), defaultCategoryIds.keys.toSet());
     expect(cats.every((c) => c.id.length == 36), isTrue);
-    final health = cats.firstWhere((c) => c.name == 'สุขภาพ');
-    final money = cats.firstWhere((c) => c.name == 'การเงิน');
-    expect(health.id, defaultCategoryIds['สุขภาพ']);
-    expect(money.id, defaultCategoryIds['การเงิน']);
-    expect(health.colorHex, '#EF4444');
-    expect(money.iconCode, 22);
+    final body = cats.firstWhere((c) => c.name == 'ร่างกาย');
+    expect(body.id, defaultCategoryIds['ร่างกาย']);
+    expect(body.colorHex, '#EF4444');
 
     final habits = await db.getAllHabits();
     expect(habits.length, 2);
     final water = habits.firstWhere((h) => h.name == 'ดื่มน้ำ');
     final save = habits.firstWhere((h) => h.name == 'ออมเงิน');
-    expect(water.categoryId, health.id);
-    expect(save.categoryId, money.id);
+    expect(water.categoryId, body.id);
+    expect(save.categoryId, body.id);
     expect(water.targetValue, 8);
     expect(water.unit, 'แก้ว');
     expect(water.reminderTime, '07:30');
@@ -136,14 +133,14 @@ void main() {
 
     db = AppDatabase.forTesting(NativeDatabase(file));
     expect((await db.getAllHabits()).map((h) => h.id).toSet(), firstIds);
-    expect((await db.getAllCategories()).length, 2);
+    expect((await db.getAllCategories()).length, 4);
     await db.close();
   });
 
-  test('v1 ที่ไม่มีหมวดเลย → ได้หมวดตั้งต้น 5 หมวดหลังอัปเกรด', () async {
+  test('v1 ที่ไม่มีหมวดเลย → ได้หมวดตั้งต้น 4 หมวดหลังอัปเกรด', () async {
     seedV1(withRows: false);
     final db = AppDatabase.forTesting(NativeDatabase(file));
-    expect((await db.getAllCategories()).length, 5);
+    expect((await db.getAllCategories()).length, 4);
     expect(await db.getAllHabits(), isEmpty);
     await db.close();
   });

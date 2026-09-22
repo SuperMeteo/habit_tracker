@@ -19,15 +19,15 @@ void main() {
         isActive: Value(active),
       ));
 
-  test('ฐานข้อมูลใหม่มีหมวดตั้งต้น 5 หมวด และ id คงที่ทุกเครื่อง', () async {
+  test('ฐานข้อมูลใหม่มีหมวดตั้งต้น 4 หมวด และ id คงที่ทุกเครื่อง', () async {
     final cats = await db.getAllCategories();
-    expect(cats.length, 5);
-    expect(await idOf('สุขภาพ'), defaultCategoryIds['สุขภาพ']);
+    expect(cats.length, 4);
+    expect(await idOf('ร่างกาย'), defaultCategoryIds['ร่างกาย']);
     expect(cats.map((c) => c.id).toSet(), defaultCategoryIds.values.toSet());
   });
 
   test('habit จากคลาวด์ที่ชี้หมวดที่ไม่รู้จัก → ตกไปหมวดแรก ไม่พัง', () async {
-    final health = await idOf('สุขภาพ');
+    final health = await idOf('ร่างกาย');
     expect(await db.resolveCategoryId(health), health);
     expect(await db.resolveCategoryId('ไม่มีหมวดนี้'), health);
     expect(await db.resolveCategoryId(null), health);
@@ -44,32 +44,32 @@ void main() {
   });
 
   test('ลบหมวดที่มี habit ใช้อยู่ไม่ได้ (รวม habit ที่ปิดไว้)', () async {
-    final health = await idOf('สุขภาพ');
+    final health = await idOf('ร่างกาย');
     await addHabit(health, active: false);
     expect(await db.deleteCategory(health), CategoryDeleteResult.inUse);
-    expect((await db.getAllCategories()).length, 5);
+    expect((await db.getAllCategories()).length, 4);
   });
 
   test('ลบหมวดที่ว่างได้ และหายจากรายการ', () async {
-    final money = await idOf('การเงิน');
+    final money = await idOf('การกิน');
     expect(await db.deleteCategory(money), CategoryDeleteResult.deleted);
     expect((await db.getAllCategories()).map((c) => c.id), isNot(contains(money)));
   });
 
   test('ลบหมวดสุดท้ายไม่ได้', () async {
-    for (final name in ['ผลิตภาพ', 'การเงิน', 'การเรียนรู้', 'อื่นๆ']) {
+    for (final name in ['การกิน', 'การนอน', 'จิตใจ']) {
       expect(await db.deleteCategory(await idOf(name)),
           CategoryDeleteResult.deleted);
     }
-    expect(await db.deleteCategory(await idOf('สุขภาพ')),
+    expect(await db.deleteCategory(await idOf('ร่างกาย')),
         CategoryDeleteResult.lastOne);
     expect((await db.getAllCategories()).length, 1);
   });
 
   test('นับจำนวน habit ในแต่ละหมวด', () async {
-    final health = await idOf('สุขภาพ');
-    final money = await idOf('การเงิน');
-    final learn = await idOf('การเรียนรู้');
+    final health = await idOf('ร่างกาย');
+    final money = await idOf('การกิน');
+    final learn = await idOf('จิตใจ');
     await addHabit(health);
     await addHabit(health);
     await addHabit(learn);
@@ -78,7 +78,7 @@ void main() {
   });
 
   test('habit ที่ลบแล้วไม่ถูกนับในหมวด', () async {
-    final health = await idOf('สุขภาพ');
+    final health = await idOf('ร่างกาย');
     await addHabit(health);
     final habit = (await db.getAllHabits()).single;
     await db.deleteHabit(habit.id);
