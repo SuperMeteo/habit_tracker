@@ -11,6 +11,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/dashboard/screens/dashboard_screen.dart';
 import 'features/analytics/screens/analytics_screen.dart';
 import 'features/leaderboard/screens/leaderboard_screen.dart';
+import 'features/leaderboard/screens/user_profile_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/habits/screens/add_habit_screen.dart';
 import 'features/habits/screens/manage_habits_screen.dart';
@@ -74,6 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/categories/manage',
         builder: (_, __) => const ManageCategoriesScreen(),
+      ),
+      GoRoute(
+        path: '/profile/:id',
+        builder: (context, state) =>
+            UserProfileScreen(userId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/admin',

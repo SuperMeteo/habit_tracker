@@ -146,9 +146,13 @@ class _CategoryBoards extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: list.length,
             separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (_, i) => _BoardCard(
+            itemBuilder: (context, i) => _BoardCard(
               board: list[i],
               isMine: list[i].champion?.userId == myUserId,
+              onTapChampion: () {
+                final id = list[i].champion?.userId;
+                if (id != null) context.push('/profile/$id');
+              },
             ),
           ),
         ),
@@ -167,7 +171,9 @@ class _CategoryBoards extends StatelessWidget {
 class _BoardCard extends StatelessWidget {
   final CategoryBoard board;
   final bool isMine;
-  const _BoardCard({required this.board, required this.isMine});
+  final VoidCallback? onTapChampion;
+  const _BoardCard(
+      {required this.board, required this.isMine, this.onTapChampion});
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +187,7 @@ class _BoardCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         tint: color,
         highlighted: isMine,
+        onTap: champ == null ? null : onTapChampion,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -253,6 +260,7 @@ class _RankTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: EdgeInsets.zero,
       highlighted: isMe,
+      onTap: () => context.push('/profile/${entry.userId}'),
       child: ListTile(
         leading: SizedBox(
           width: 40,

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/database/app_database.dart';
 import 'package:habit_tracker/data/models/category_leader.dart';
-import 'package:habit_tracker/data/models/leaderboard_entry.dart';
 import 'package:habit_tracker/data/repositories/leaderboard_repository.dart';
 
 const health = '11111111-1111-4111-8111-111111111101';
