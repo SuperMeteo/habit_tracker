@@ -9,7 +9,6 @@ import '../../habits/models/habit_icons.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_grid_card.dart';
 import '../widgets/score_reward_popup.dart';
-import '../../../core/database/app_database.dart';
 import '../../../core/scoring/score_calculator.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/rank_badge.dart';
@@ -159,9 +158,8 @@ class DashboardScreen extends ConsumerWidget {
     await action();
     final after = await _snapshot(ref);
 
+    final cats = await ref.read(databaseProvider).getAllCategories();
     if (!context.mounted) return;
-    final cats =
-        ref.read(categoriesProvider).valueOrNull ?? const <Category>[];
     String nameOf(String id) {
       for (final c in cats) {
         if (c.id == id) return c.name;
