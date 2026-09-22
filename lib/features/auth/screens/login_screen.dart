@@ -184,7 +184,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               const SizedBox(height: 8),
               // ข้ามไปใช้แบบ guest
               TextButton(
-                onPressed: () => context.go('/'),
+                onPressed: () async {
+                  await ref.read(guestModeProvider.notifier).skipLogin();
+                  if (context.mounted) context.go('/');
+                },
                 child: const Text('ข้ามก่อน (ใช้แบบออฟไลน์)'),
               ),
               const SizedBox(height: 16),

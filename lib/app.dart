@@ -26,8 +26,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       if (!onlineMode) return null;
       final loggedIn = ref.read(appUserProvider) != null;
+      final guest = ref.read(guestModeProvider);
       final goingToLogin = state.matchedLocation == '/login';
-      if (!loggedIn && !goingToLogin) return '/login';
+      // บังคับไปหน้า login แค่ครั้งแรกที่ยังไม่เคยเลือกอะไร
+      // ถ้าเคยกด "ข้ามก่อน" แล้ว ต้องปล่อยให้ใช้แบบออฟไลน์ได้ตลอด
+      if (!loggedIn && !guest && !goingToLogin) return '/login';
       if (loggedIn && goingToLogin) return '/';
       return null;
     },
@@ -123,6 +126,8 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final router = ref.watch(routerProvider);
+
+    ref.listen(guestModeProvider, (_, __) => router.refresh());
 
     ref.listen(appUserProvider, (prev, next) {
       router.refresh();

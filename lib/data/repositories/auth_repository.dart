@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/supabase/supabase_client_provider.dart';
 import '../datasources/remote/auth_remote_ds.dart';
@@ -9,6 +10,37 @@ final authRepositoryProvider = Provider<AuthRepository?>((ref) {
   if (client == null) return null; // offline mode
   return AuthRepository(AuthRemoteDataSource(client));
 });
+
+/// ผู้ใช้กด "ข้ามก่อน (ใช้แบบออฟไลน์)" ไปแล้วหรือยัง
+///
+/// ต้องจำข้ามการเปิดแอป ไม่ใช่จำแค่ในหน่วยความจำ
+/// ไม่งั้นเปิดแอปใหม่ก็จะถูกบังคับให้เห็นหน้า login อีก
+/// ซึ่งขัดกับตัวตนของแอปที่ใช้งานออฟไลน์ได้ 100%
+final guestModeProvider =
+    StateNotifierProvider<GuestModeNotifier, bool>((ref) => GuestModeNotifier());
+
+class GuestModeNotifier extends StateNotifier<bool> {
+  static const _key = 'guest_mode';
+
+  GuestModeNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      state = prefs.getBool(_key) ?? false;
+    } catch (_) {}
+  }
+
+  Future<void> skipLogin() async {
+    state = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_key, true);
+    } catch (_) {}
+  }
+}
 
 // AppUser ปัจจุบัน (null = guest/offline)
 final appUserProvider = StateNotifierProvider<AppUserNotifier, AppUser?>((ref) {
