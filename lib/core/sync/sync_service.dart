@@ -140,6 +140,7 @@ class SyncService extends StateNotifier<SyncState> {
         'category_id': h.categoryId,
         'frequency_type': h.frequencyType,
         'target_days': h.targetDays,
+        'input_type': h.inputType,
         'target_value': h.targetValue,
         'unit': h.unit,
         'reminder_time': h.reminderTime,
@@ -201,6 +202,7 @@ class SyncService extends StateNotifier<SyncState> {
         name: Value(row['name'] as String? ?? ''),
         description: Value(row['description'] as String? ?? ''),
         frequencyType: Value(row['frequency_type'] as String? ?? 'daily'),
+        inputType: Value(_inputType(row)),
         targetDays: Value(row['target_days'] as String? ?? '[1,2,3,4,5,6,7]'),
         targetValue: Value((row['target_value'] as num?)?.toDouble()),
         unit: Value(row['unit'] as String?),
@@ -245,6 +247,12 @@ class SyncService extends StateNotifier<SyncState> {
   static DateTime? _parseDate(Object? v) {
     if (v == null) return null;
     return DateTime.tryParse(v.toString())?.toLocal();
+  }
+
+  static String _inputType(Map<String, dynamic> row) {
+    final raw = row['input_type'] as String?;
+    if (raw == 'number' || raw == 'scale3') return raw!;
+    return row['target_value'] == null ? 'check' : 'number';
   }
 
   static String _dateOnly(DateTime d) =>

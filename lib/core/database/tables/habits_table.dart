@@ -12,6 +12,8 @@ class Habits extends Table {
   // JSON list e.g. "[1,3,5]" Mon=1 Sun=7
   TextColumn get targetDays => text().withDefault(const Constant('[1,2,3,4,5,6,7]'))();
   IntColumn get timesPerWeek => integer().withDefault(const Constant(1))();
+  // 'check' | 'number' | 'scale3'
+  TextColumn get inputType => text().withDefault(const Constant('check'))();
   // null = boolean habit, >0 = numeric habit
   RealColumn get targetValue => real().nullable()();
   TextColumn get unit => text().nullable()();

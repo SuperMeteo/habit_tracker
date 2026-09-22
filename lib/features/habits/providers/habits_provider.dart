@@ -57,6 +57,14 @@ final logsForSelectedWeekProvider = StreamProvider<List<HabitLog>>((ref) {
 
 // ─── Combined habit + log for dashboard ───────────────────────────────────
 
+String habitInputType(Habit h) {
+  final t = h.inputType;
+  if (t == 'number' || t == 'scale3') return t;
+  return h.targetValue != null ? 'number' : 'check';
+}
+
+const scaleLabels = ['น้อย', 'ปานกลาง', 'มาก'];
+
 class HabitWithLog {
   final Habit habit;
   final HabitLog? log;
@@ -180,6 +188,31 @@ class HabitActions {
         isDone: const Value(true),
       ));
     }
+    _scheduleSync();
+  }
+
+  Future<void> logScale(String habitId, DateTime date, int level) async {
+    final existing = await _db.getLogForHabitAndDate(habitId, date);
+    await _db.upsertLog(HabitLogsCompanion(
+      id: existing != null ? Value(existing.id) : const Value.absent(),
+      habitId: Value(habitId),
+      loggedDate: Value(date),
+      isDone: const Value(true),
+      value: Value(level.toDouble()),
+    ));
+    _scheduleSync();
+  }
+
+  Future<void> clearLog(String habitId, DateTime date) async {
+    final existing = await _db.getLogForHabitAndDate(habitId, date);
+    if (existing == null) return;
+    await _db.upsertLog(HabitLogsCompanion(
+      id: Value(existing.id),
+      habitId: Value(habitId),
+      loggedDate: Value(date),
+      isDone: const Value(false),
+      value: const Value(null),
+    ));
     _scheduleSync();
   }
 

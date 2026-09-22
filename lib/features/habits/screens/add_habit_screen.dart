@@ -30,7 +30,8 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   String _frequencyType = 'daily';
   List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
   int _timesPerWeek = 3;
-  bool _isNumeric = false;
+  String _inputType = 'check';
+  bool get _isNumeric => _inputType == 'number';
   String _colorHex = '#6366F1';
   int _iconCode = HabitIcons.defaultCode;
   TimeOfDay? _reminderTime;
@@ -54,7 +55,7 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       _frequencyType = h.frequencyType;
       _targetDays = List<int>.from(jsonDecode(h.targetDays));
       _timesPerWeek = h.timesPerWeek.clamp(1, 7);
-      _isNumeric = h.targetValue != null;
+      _inputType = habitInputType(h);
       _colorHex = h.colorHex;
       _iconCode = h.iconCode;
       if (h.reminderTime != null) {
@@ -83,7 +84,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
     setState(() {
       _nameCtrl.text = template.name;
       _descCtrl.text = template.description;
-      _isNumeric = template.isNumeric;
+      _inputType = template.isScale
+          ? 'scale3'
+          : (template.isNumeric ? 'number' : 'check');
       _colorHex = template.colorHex;
       _iconCode = template.iconCode;
       if (scoredCategoryIds.contains(template.categoryKey)) {
@@ -409,12 +412,37 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
   }
 
   Widget _buildNumericToggle() {
-    return SwitchListTile(
-      title: const Text('ติดตามค่าตัวเลข'),
-      subtitle: const Text('เช่น ดื่มน้ำ 8 แก้ว, วิ่ง 5 กม.'),
-      value: _isNumeric,
-      onChanged: (v) => setState(() => _isNumeric = v),
-      contentPadding: EdgeInsets.zero,
+    const options = [
+      ('check', 'ทำ / ไม่ทำ'),
+      ('number', 'ค่าตัวเลข'),
+      ('scale3', '3 ระดับ'),
+    ];
+    const hints = {
+      'check': 'ติ๊กว่าทำแล้วหรือยัง',
+      'number': 'เช่น ดื่มน้ำ 8 แก้ว, นอน 8 ชั่วโมง',
+      'scale3': 'ตอบเป็น น้อย / ปานกลาง / มาก',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('วิธีบันทึก',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        SegmentedButton<String>(
+          segments: [
+            for (final (v, label) in options)
+              ButtonSegment(value: v, label: Text(label)),
+          ],
+          selected: {_inputType},
+          showSelectedIcon: false,
+          onSelectionChanged: (v) => setState(() => _inputType = v.first),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          hints[_inputType]!,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 
@@ -481,7 +509,9 @@ class _AddHabitScreenState extends ConsumerState<AddHabitScreen> {
       frequencyType: Value(_frequencyType),
       targetDays: Value(jsonEncode(_targetDays)),
       timesPerWeek: Value(_timesPerWeek),
-      targetValue: Value(_isNumeric ? double.tryParse(_targetValueCtrl.text) : null),
+      inputType: Value(_inputType),
+      targetValue:
+          Value(_isNumeric ? double.tryParse(_targetValueCtrl.text) : null),
       unit: Value(_isNumeric ? _unitCtrl.text.trim() : null),
       reminderTime: Value(_reminderTime != null
           ? '${_reminderTime!.hour.toString().padLeft(2, '0')}:${_reminderTime!.minute.toString().padLeft(2, '0')}'

@@ -17,6 +17,7 @@ Habit _habit({
       categoryId: 'c1',
       name: 'ดื่มน้ำ',
       description: description,
+      inputType: 'check',
       frequencyType: type,
       targetDays: '[1,2,3,4,5,6,7]',
       timesPerWeek: times,

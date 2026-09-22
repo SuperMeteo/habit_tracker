@@ -529,6 +529,14 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(1));
+  static const VerificationMeta _inputTypeMeta =
+      const VerificationMeta('inputType');
+  @override
+  late final GeneratedColumn<String> inputType = GeneratedColumn<String>(
+      'input_type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('check'));
   static const VerificationMeta _targetValueMeta =
       const VerificationMeta('targetValue');
   @override
@@ -616,6 +624,7 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
         frequencyType,
         targetDays,
         timesPerWeek,
+        inputType,
         targetValue,
         unit,
         reminderTime,
@@ -680,6 +689,10 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
           _timesPerWeekMeta,
           timesPerWeek.isAcceptableOrUnknown(
               data['times_per_week']!, _timesPerWeekMeta));
+    }
+    if (data.containsKey('input_type')) {
+      context.handle(_inputTypeMeta,
+          inputType.isAcceptableOrUnknown(data['input_type']!, _inputTypeMeta));
     }
     if (data.containsKey('target_value')) {
       context.handle(
@@ -754,6 +767,8 @@ class $HabitsTable extends Habits with TableInfo<$HabitsTable, Habit> {
           .read(DriftSqlType.string, data['${effectivePrefix}target_days'])!,
       timesPerWeek: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}times_per_week'])!,
+      inputType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}input_type'])!,
       targetValue: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}target_value']),
       unit: attachedDatabase.typeMapping
@@ -793,6 +808,7 @@ class Habit extends DataClass implements Insertable<Habit> {
   final String frequencyType;
   final String targetDays;
   final int timesPerWeek;
+  final String inputType;
   final double? targetValue;
   final String? unit;
   final String? reminderTime;
@@ -812,6 +828,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       required this.frequencyType,
       required this.targetDays,
       required this.timesPerWeek,
+      required this.inputType,
       this.targetValue,
       this.unit,
       this.reminderTime,
@@ -833,6 +850,7 @@ class Habit extends DataClass implements Insertable<Habit> {
     map['frequency_type'] = Variable<String>(frequencyType);
     map['target_days'] = Variable<String>(targetDays);
     map['times_per_week'] = Variable<int>(timesPerWeek);
+    map['input_type'] = Variable<String>(inputType);
     if (!nullToAbsent || targetValue != null) {
       map['target_value'] = Variable<double>(targetValue);
     }
@@ -866,6 +884,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       frequencyType: Value(frequencyType),
       targetDays: Value(targetDays),
       timesPerWeek: Value(timesPerWeek),
+      inputType: Value(inputType),
       targetValue: targetValue == null && nullToAbsent
           ? const Value.absent()
           : Value(targetValue),
@@ -898,6 +917,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       frequencyType: serializer.fromJson<String>(json['frequencyType']),
       targetDays: serializer.fromJson<String>(json['targetDays']),
       timesPerWeek: serializer.fromJson<int>(json['timesPerWeek']),
+      inputType: serializer.fromJson<String>(json['inputType']),
       targetValue: serializer.fromJson<double?>(json['targetValue']),
       unit: serializer.fromJson<String?>(json['unit']),
       reminderTime: serializer.fromJson<String?>(json['reminderTime']),
@@ -922,6 +942,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       'frequencyType': serializer.toJson<String>(frequencyType),
       'targetDays': serializer.toJson<String>(targetDays),
       'timesPerWeek': serializer.toJson<int>(timesPerWeek),
+      'inputType': serializer.toJson<String>(inputType),
       'targetValue': serializer.toJson<double?>(targetValue),
       'unit': serializer.toJson<String?>(unit),
       'reminderTime': serializer.toJson<String?>(reminderTime),
@@ -944,6 +965,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           String? frequencyType,
           String? targetDays,
           int? timesPerWeek,
+          String? inputType,
           Value<double?> targetValue = const Value.absent(),
           Value<String?> unit = const Value.absent(),
           Value<String?> reminderTime = const Value.absent(),
@@ -963,6 +985,7 @@ class Habit extends DataClass implements Insertable<Habit> {
         frequencyType: frequencyType ?? this.frequencyType,
         targetDays: targetDays ?? this.targetDays,
         timesPerWeek: timesPerWeek ?? this.timesPerWeek,
+        inputType: inputType ?? this.inputType,
         targetValue: targetValue.present ? targetValue.value : this.targetValue,
         unit: unit.present ? unit.value : this.unit,
         reminderTime:
@@ -992,6 +1015,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       timesPerWeek: data.timesPerWeek.present
           ? data.timesPerWeek.value
           : this.timesPerWeek,
+      inputType: data.inputType.present ? data.inputType.value : this.inputType,
       targetValue:
           data.targetValue.present ? data.targetValue.value : this.targetValue,
       unit: data.unit.present ? data.unit.value : this.unit,
@@ -1020,6 +1044,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           ..write('frequencyType: $frequencyType, ')
           ..write('targetDays: $targetDays, ')
           ..write('timesPerWeek: $timesPerWeek, ')
+          ..write('inputType: $inputType, ')
           ..write('targetValue: $targetValue, ')
           ..write('unit: $unit, ')
           ..write('reminderTime: $reminderTime, ')
@@ -1044,6 +1069,7 @@ class Habit extends DataClass implements Insertable<Habit> {
       frequencyType,
       targetDays,
       timesPerWeek,
+      inputType,
       targetValue,
       unit,
       reminderTime,
@@ -1066,6 +1092,7 @@ class Habit extends DataClass implements Insertable<Habit> {
           other.frequencyType == this.frequencyType &&
           other.targetDays == this.targetDays &&
           other.timesPerWeek == this.timesPerWeek &&
+          other.inputType == this.inputType &&
           other.targetValue == this.targetValue &&
           other.unit == this.unit &&
           other.reminderTime == this.reminderTime &&
@@ -1087,6 +1114,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
   final Value<String> frequencyType;
   final Value<String> targetDays;
   final Value<int> timesPerWeek;
+  final Value<String> inputType;
   final Value<double?> targetValue;
   final Value<String?> unit;
   final Value<String?> reminderTime;
@@ -1107,6 +1135,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.frequencyType = const Value.absent(),
     this.targetDays = const Value.absent(),
     this.timesPerWeek = const Value.absent(),
+    this.inputType = const Value.absent(),
     this.targetValue = const Value.absent(),
     this.unit = const Value.absent(),
     this.reminderTime = const Value.absent(),
@@ -1128,6 +1157,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     this.frequencyType = const Value.absent(),
     this.targetDays = const Value.absent(),
     this.timesPerWeek = const Value.absent(),
+    this.inputType = const Value.absent(),
     this.targetValue = const Value.absent(),
     this.unit = const Value.absent(),
     this.reminderTime = const Value.absent(),
@@ -1151,6 +1181,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     Expression<String>? frequencyType,
     Expression<String>? targetDays,
     Expression<int>? timesPerWeek,
+    Expression<String>? inputType,
     Expression<double>? targetValue,
     Expression<String>? unit,
     Expression<String>? reminderTime,
@@ -1172,6 +1203,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       if (frequencyType != null) 'frequency_type': frequencyType,
       if (targetDays != null) 'target_days': targetDays,
       if (timesPerWeek != null) 'times_per_week': timesPerWeek,
+      if (inputType != null) 'input_type': inputType,
       if (targetValue != null) 'target_value': targetValue,
       if (unit != null) 'unit': unit,
       if (reminderTime != null) 'reminder_time': reminderTime,
@@ -1195,6 +1227,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       Value<String>? frequencyType,
       Value<String>? targetDays,
       Value<int>? timesPerWeek,
+      Value<String>? inputType,
       Value<double?>? targetValue,
       Value<String?>? unit,
       Value<String?>? reminderTime,
@@ -1215,6 +1248,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
       frequencyType: frequencyType ?? this.frequencyType,
       targetDays: targetDays ?? this.targetDays,
       timesPerWeek: timesPerWeek ?? this.timesPerWeek,
+      inputType: inputType ?? this.inputType,
       targetValue: targetValue ?? this.targetValue,
       unit: unit ?? this.unit,
       reminderTime: reminderTime ?? this.reminderTime,
@@ -1253,6 +1287,9 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
     }
     if (timesPerWeek.present) {
       map['times_per_week'] = Variable<int>(timesPerWeek.value);
+    }
+    if (inputType.present) {
+      map['input_type'] = Variable<String>(inputType.value);
     }
     if (targetValue.present) {
       map['target_value'] = Variable<double>(targetValue.value);
@@ -1303,6 +1340,7 @@ class HabitsCompanion extends UpdateCompanion<Habit> {
           ..write('frequencyType: $frequencyType, ')
           ..write('targetDays: $targetDays, ')
           ..write('timesPerWeek: $timesPerWeek, ')
+          ..write('inputType: $inputType, ')
           ..write('targetValue: $targetValue, ')
           ..write('unit: $unit, ')
           ..write('reminderTime: $reminderTime, ')
@@ -2246,6 +2284,7 @@ typedef $$HabitsTableCreateCompanionBuilder = HabitsCompanion Function({
   Value<String> frequencyType,
   Value<String> targetDays,
   Value<int> timesPerWeek,
+  Value<String> inputType,
   Value<double?> targetValue,
   Value<String?> unit,
   Value<String?> reminderTime,
@@ -2267,6 +2306,7 @@ typedef $$HabitsTableUpdateCompanionBuilder = HabitsCompanion Function({
   Value<String> frequencyType,
   Value<String> targetDays,
   Value<int> timesPerWeek,
+  Value<String> inputType,
   Value<double?> targetValue,
   Value<String?> unit,
   Value<String?> reminderTime,
@@ -2341,6 +2381,9 @@ class $$HabitsTableFilterComposer
 
   ColumnFilters<int> get timesPerWeek => $composableBuilder(
       column: $table.timesPerWeek, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get inputType => $composableBuilder(
+      column: $table.inputType, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get targetValue => $composableBuilder(
       column: $table.targetValue, builder: (column) => ColumnFilters(column));
@@ -2446,6 +2489,9 @@ class $$HabitsTableOrderingComposer
       column: $table.timesPerWeek,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get inputType => $composableBuilder(
+      column: $table.inputType, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get targetValue => $composableBuilder(
       column: $table.targetValue, builder: (column) => ColumnOrderings(column));
 
@@ -2527,6 +2573,9 @@ class $$HabitsTableAnnotationComposer
 
   GeneratedColumn<int> get timesPerWeek => $composableBuilder(
       column: $table.timesPerWeek, builder: (column) => column);
+
+  GeneratedColumn<String> get inputType =>
+      $composableBuilder(column: $table.inputType, builder: (column) => column);
 
   GeneratedColumn<double> get targetValue => $composableBuilder(
       column: $table.targetValue, builder: (column) => column);
@@ -2633,6 +2682,7 @@ class $$HabitsTableTableManager extends RootTableManager<
             Value<String> frequencyType = const Value.absent(),
             Value<String> targetDays = const Value.absent(),
             Value<int> timesPerWeek = const Value.absent(),
+            Value<String> inputType = const Value.absent(),
             Value<double?> targetValue = const Value.absent(),
             Value<String?> unit = const Value.absent(),
             Value<String?> reminderTime = const Value.absent(),
@@ -2654,6 +2704,7 @@ class $$HabitsTableTableManager extends RootTableManager<
             frequencyType: frequencyType,
             targetDays: targetDays,
             timesPerWeek: timesPerWeek,
+            inputType: inputType,
             targetValue: targetValue,
             unit: unit,
             reminderTime: reminderTime,
@@ -2675,6 +2726,7 @@ class $$HabitsTableTableManager extends RootTableManager<
             Value<String> frequencyType = const Value.absent(),
             Value<String> targetDays = const Value.absent(),
             Value<int> timesPerWeek = const Value.absent(),
+            Value<String> inputType = const Value.absent(),
             Value<double?> targetValue = const Value.absent(),
             Value<String?> unit = const Value.absent(),
             Value<String?> reminderTime = const Value.absent(),
@@ -2696,6 +2748,7 @@ class $$HabitsTableTableManager extends RootTableManager<
             frequencyType: frequencyType,
             targetDays: targetDays,
             timesPerWeek: timesPerWeek,
+            inputType: inputType,
             targetValue: targetValue,
             unit: unit,
             reminderTime: reminderTime,

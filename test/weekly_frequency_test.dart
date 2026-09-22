@@ -8,6 +8,7 @@ Habit _habit({String type = 'times_per_week', int times = 3}) => Habit(
       categoryId: 'c1',
       name: 'วิ่ง',
       description: '',
+      inputType: 'check',
       frequencyType: type,
       targetDays: '[1,2,3,4,5,6,7]',
       timesPerWeek: times,

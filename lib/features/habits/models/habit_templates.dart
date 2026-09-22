@@ -4,6 +4,7 @@ class HabitTemplate {
   final String name;
   final String categoryKey;
   final bool isNumeric;
+  final bool isScale;
   final double? targetValue;
   final String? unit;
   final IconData icon;
@@ -18,6 +19,7 @@ class HabitTemplate {
     required this.icon,
     required this.colorHex,
     this.isNumeric = false,
+    this.isScale = false,
     this.targetValue,
     this.unit,
     this.description = '',
@@ -190,6 +192,14 @@ class HabitTemplates {
       emoji: '🧘',
       color: Color(0xFF10B981),
       templates: [
+        HabitTemplate(
+          name: 'วันนี้รู้สึกดีไหม',
+          categoryKey: kMindId,
+          isScale: true,
+          icon: Icons.emoji_emotions,
+          colorHex: '#10B981',
+          description: 'ตอบเป็น น้อย / ปานกลาง / มาก',
+        ),
         HabitTemplate(
           name: 'นั่งสมาธิ',
           categoryKey: kMindId,

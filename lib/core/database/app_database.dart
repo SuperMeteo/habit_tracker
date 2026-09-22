@@ -30,7 +30,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -44,6 +44,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await _migrateToFourCategories();
+          }
+          if (from >= 2 && from < 4) {
+            await m.addColumn(habits, habits.inputType);
+            await customStatement(
+                "UPDATE habits SET input_type = 'number' "
+                "WHERE target_value IS NOT NULL");
           }
         },
         beforeOpen: (details) async {

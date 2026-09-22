@@ -331,7 +331,10 @@ class DashboardScreen extends ConsumerWidget {
             onToggle: () =>
                 _onToggle(context, actions, item, selectedDate),
             onNumericTap: () =>
-                _showNumericDialog(context, ref, item, actions, selectedDate),
+                habitInputType(item.habit) == 'scale3'
+                    ? _showScaleSheet(context, item, actions, selectedDate)
+                    : _showNumericDialog(
+                        context, ref, item, actions, selectedDate),
             onMenu: () => _showHabitMenu(context, ref, item, actions),
           );
         },
@@ -472,6 +475,76 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _showScaleSheet(
+    BuildContext context,
+    HabitWithLog item,
+    HabitActions actions,
+    DateTime date,
+  ) async {
+    final color = AppTheme.parseHex(item.habit.colorHex);
+    final current =
+        item.log?.isDone == true ? item.log?.value?.round().clamp(1, 3) : null;
+    const faces = ['😕', '😐', '😄'];
+
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              child: Text(
+                item.habit.name,
+                style: Theme.of(sheetContext)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Text(
+                item.habit.description.isNotEmpty
+                    ? item.habit.description
+                    : 'เลือกระดับของวันนี้',
+                style: Theme.of(sheetContext).textTheme.bodySmall,
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (var i = 0; i < 3; i++)
+                  _ScaleOption(
+                    face: faces[i],
+                    label: scaleLabels[i],
+                    color: color,
+                    selected: current == i + 1,
+                    onTap: () => Navigator.pop(sheetContext, i + 1),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (current != null)
+              TextButton(
+                onPressed: () => Navigator.pop(sheetContext, 0),
+                child: const Text('ล้างคำตอบของวันนี้'),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (picked == null) return;
+    if (picked == 0) {
+      await actions.clearLog(item.habit.id, date);
+    } else {
+      await actions.logScale(item.habit.id, date, picked);
+    }
+  }
+
   void _showNumericDialog(
     BuildContext context,
     WidgetRef ref,
@@ -544,6 +617,55 @@ class _TierBadge extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+}
+
+class _ScaleOption extends StatelessWidget {
+  final String face;
+  final String label;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ScaleOption({
+    required this.face,
+    required this.label,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        width: 92,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.16) : Colors.transparent,
+          border: Border.all(
+            color:
+                selected ? color : Theme.of(context).colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Text(face, style: const TextStyle(fontSize: 30)),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? color : null,
+              ),
+            ),
+          ],
         ),
       ),
     );

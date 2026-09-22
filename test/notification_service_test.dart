@@ -18,6 +18,7 @@ Habit _habit({
       categoryId: 'c1',
       name: 'วิ่ง',
       description: '',
+      inputType: 'check',
       frequencyType: type,
       targetDays: days,
       timesPerWeek: times,

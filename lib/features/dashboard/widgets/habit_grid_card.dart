@@ -18,11 +18,23 @@ class HabitGridCard extends StatelessWidget {
     this.onMenu,
   });
 
-  bool get _isNumeric => item.habit.targetValue != null;
+  String get _type => habitInputType(item.habit);
+  bool get _isNumeric => _type == 'number';
+  bool get _isScale => _type == 'scale3';
   bool get _isWeekly => item.habit.frequencyType == 'times_per_week';
   bool get _isDone => item.log?.isDone ?? false;
 
+  int? get _level {
+    final v = item.log?.value;
+    if (v == null || !_isDone) return null;
+    return v.round().clamp(1, 3);
+  }
+
   double get _progress {
+    if (_isScale) {
+      final l = _level;
+      return l == null ? 0 : l / 3;
+    }
     if (_isNumeric) {
       final val = item.log?.value ?? 0;
       final target = item.habit.targetValue ?? 1;
@@ -60,7 +72,7 @@ class HabitGridCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: _isNumeric ? onNumericTap : onToggle,
+            onTap: (_isNumeric || _isScale) ? onNumericTap : onToggle,
             onLongPress: onMenu,
             child: Padding(
               padding: const EdgeInsets.all(14),
@@ -71,7 +83,7 @@ class HabitGridCard extends StatelessWidget {
                     children: [
                       _iconChip(color),
                       const Spacer(),
-                      if (!_isNumeric) _checkButton(color, theme),
+                      if (!_isNumeric && !_isScale) _checkButton(color, theme),
                     ],
                   ),
                   const Spacer(),
@@ -138,6 +150,19 @@ class HabitGridCard extends StatelessWidget {
       );
 
   Widget _centrePiece(Color color, ThemeData theme) {
+    if (_isScale) {
+      final l = _level;
+      return ProgressRing(
+        value: _progress,
+        color: color,
+        size: 74,
+        stroke: 7,
+        child: Text(
+          l == null ? '?' : ['😕', '😐', '😄'][l - 1],
+          style: TextStyle(fontSize: l == null ? 26 : 30, color: color),
+        ),
+      );
+    }
     if (_isNumeric) {
       final val = item.log?.value ?? 0;
       return ProgressRing(
@@ -202,6 +227,10 @@ class HabitGridCard extends StatelessWidget {
   }
 
   String _subtitle() {
+    if (_isScale) {
+      final l = _level;
+      return l == null ? 'แตะเพื่อตอบ' : 'วันนี้: ${scaleLabels[l - 1]}';
+    }
     if (_isNumeric) {
       final target = item.habit.targetValue ?? 1;
       return 'เป้าหมาย ${_fmt(target)} ${item.habit.unit ?? ''}'.trim();
