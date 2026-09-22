@@ -31,6 +31,10 @@ final habitsProvider = StreamProvider<List<Habit>>((ref) {
   return ref.watch(databaseProvider).watchActiveHabits();
 });
 
+final allHabitsProvider = StreamProvider<List<Habit>>((ref) {
+  return ref.watch(databaseProvider).watchHabitsIncludingPaused();
+});
+
 // ─── Logs for selected date ────────────────────────────────────────────────
 
 final selectedDateProvider = StateProvider<DateTime>((ref) {
@@ -135,8 +139,19 @@ class HabitActions {
   }
 
   Future<void> deleteHabit(String id) async {
+    await _db.deleteLogsForHabit(id);
     await _db.deleteHabit(id);
     await NotificationService.instance.cancelForHabit(id);
+    _scheduleSync();
+  }
+
+  Future<void> setHabitActive(String id, bool active) async {
+    await _db.setHabitActive(id, active);
+    if (active) {
+      await _syncReminder(id);
+    } else {
+      await NotificationService.instance.cancelForHabit(id);
+    }
     _scheduleSync();
   }
 

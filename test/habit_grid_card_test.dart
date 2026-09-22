@@ -43,7 +43,7 @@ HabitLog _log({bool done = true, double? value}) => HabitLog(
     );
 
 Future<void> _pump(WidgetTester tester, HabitWithLog item,
-    {VoidCallback? onToggle, VoidCallback? onNumericTap}) {
+    {VoidCallback? onToggle, VoidCallback? onNumericTap, VoidCallback? onMenu}) {
   return tester.pumpWidget(MaterialApp(
     home: Scaffold(
       body: SizedBox(
@@ -53,6 +53,7 @@ Future<void> _pump(WidgetTester tester, HabitWithLog item,
           item: item,
           onToggle: onToggle ?? () {},
           onNumericTap: onNumericTap,
+          onMenu: onMenu,
         ),
       ),
     ),
@@ -60,6 +61,42 @@ Future<void> _pump(WidgetTester tester, HabitWithLog item,
 }
 
 void main() {
+  testWidgets('กดค้างที่การ์ด → เรียกเมนู แก้ไข/พัก/ลบ โดยไม่เผลอติ๊กทำ',
+      (tester) async {
+    var menu = 0;
+    var toggled = 0;
+    await _pump(
+      tester,
+      HabitWithLog(habit: _habit()),
+      onToggle: () => toggled++,
+      onMenu: () => menu++,
+    );
+
+    await tester.longPress(find.text('ดื่มน้ำ'));
+    await tester.pump();
+
+    expect(menu, 1);
+    expect(toggled, 0);
+  });
+
+  testWidgets('กดค้างที่ช่องติ๊กก็เปิดเมนูเหมือนกัน ไม่ใช่จุดตาย',
+      (tester) async {
+    var menu = 0;
+    var toggled = 0;
+    await _pump(
+      tester,
+      HabitWithLog(habit: _habit()),
+      onToggle: () => toggled++,
+      onMenu: () => menu++,
+    );
+
+    await tester.longPress(find.byType(GestureDetector).last);
+    await tester.pump();
+
+    expect(menu, 1);
+    expect(toggled, 0);
+  });
+
   testWidgets('habit ทำ/ไม่ทำ: แสดงชื่อ + สถานะยังไม่ได้ทำ และกดช่องติ๊กแล้วเรียก onToggle',
       (tester) async {
     var toggled = 0;

@@ -12,7 +12,8 @@ class ManageHabitsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final habitsAsync = ref.watch(habitsProvider);
+    final habitsAsync = ref.watch(allHabitsProvider);
+    final actions = ref.watch(habitActionsProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('จัดการ Habit')),
@@ -25,28 +26,26 @@ class ManageHabitsScreen extends ConsumerWidget {
               subtitle: 'กด + เพื่อเพิ่ม Habit แรก',
             );
           }
-          return ListView.builder(
-            itemCount: habits.length,
-            itemBuilder: (_, i) {
-              final habit = habits[i];
-              final color = AppTheme.parseHex(habit.colorHex);
-              return ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+          final active = habits.where((h) => h.isActive).toList();
+          final paused = habits.where((h) => !h.isActive).toList();
+
+          return ListView(
+            children: [
+              for (final habit in active) _tile(context, habit, actions),
+              if (paused.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+                  child: Text(
+                    'พักไว้ (${paused.length})',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                   ),
-                  child: Icon(HabitIcons.fromCode(habit.iconCode),
-                      color: color, size: 20),
                 ),
-                title: Text(habit.name),
-                subtitle: Text(_frequencyLabel(habit)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push('/habits/edit', extra: habit),
-              );
-            },
+                for (final habit in paused) _tile(context, habit, actions),
+                const SizedBox(height: 24),
+              ],
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -55,6 +54,39 @@ class ManageHabitsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/habits/add'),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _tile(BuildContext context, Habit habit, HabitActions actions) {
+    final color = AppTheme.parseHex(habit.colorHex);
+    final paused = !habit.isActive;
+    return Opacity(
+      opacity: paused ? 0.6 : 1,
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child:
+              Icon(HabitIcons.fromCode(habit.iconCode), color: color, size: 20),
+        ),
+        title: Text(habit.name),
+        subtitle: Text(paused ? 'พักไว้' : _frequencyLabel(habit)),
+        trailing: paused
+            ? TextButton(
+                onPressed: () => actions.setHabitActive(habit.id, true),
+                child: const Text('เลิกพัก'),
+              )
+            : IconButton(
+                icon: const Icon(Icons.pause_circle_outline),
+                tooltip: 'พักไว้ก่อน',
+                onPressed: () => actions.setHabitActive(habit.id, false),
+              ),
+        onTap: () => context.push('/habits/edit', extra: habit),
       ),
     );
   }

@@ -256,6 +256,17 @@ class AppDatabase extends _$AppDatabase {
     return update(habits).replace(ready);
   }
 
+  Stream<List<Habit>> watchHabitsIncludingPaused() =>
+      (select(habits)..where((h) => h.deletedAt.isNull())).watch();
+
+  Future<int> setHabitActive(String id, bool active) => (update(habits)
+        ..where((h) => h.id.equals(id)))
+      .write(HabitsCompanion(
+        isActive: Value(active),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ));
+
   /// soft delete — เก็บ deletedAt ไว้เพื่อ sync การลบข้ามเครื่อง
   Future<int> deleteHabit(String id) => (update(habits)
         ..where((h) => h.id.equals(id)))
@@ -327,6 +338,14 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteLog(String id) => (update(habitLogs)
         ..where((l) => l.id.equals(id)))
+      .write(HabitLogsCompanion(
+        deletedAt: Value(DateTime.now()),
+        updatedAt: Value(DateTime.now()),
+        syncStatus: const Value('pending'),
+      ));
+
+  Future<int> deleteLogsForHabit(String habitId) => (update(habitLogs)
+        ..where((l) => l.habitId.equals(habitId) & l.deletedAt.isNull()))
       .write(HabitLogsCompanion(
         deletedAt: Value(DateTime.now()),
         updatedAt: Value(DateTime.now()),

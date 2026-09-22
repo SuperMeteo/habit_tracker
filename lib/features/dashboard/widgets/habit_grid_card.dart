@@ -8,12 +8,14 @@ class HabitGridCard extends StatelessWidget {
   final HabitWithLog item;
   final VoidCallback onToggle;
   final VoidCallback? onNumericTap;
+  final VoidCallback? onMenu;
 
   const HabitGridCard({
     super.key,
     required this.item,
     required this.onToggle,
     this.onNumericTap,
+    this.onMenu,
   });
 
   bool get _isNumeric => item.habit.targetValue != null;
@@ -59,6 +61,7 @@ class HabitGridCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: _isNumeric ? onNumericTap : onToggle,
+            onLongPress: onMenu,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -114,6 +117,7 @@ class HabitGridCard extends StatelessWidget {
 
   Widget _checkButton(Color color, ThemeData theme) => GestureDetector(
         onTap: onToggle,
+        onLongPress: onMenu,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

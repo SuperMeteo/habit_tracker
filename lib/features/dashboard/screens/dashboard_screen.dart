@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/error_messages.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../habits/models/habit_icons.dart';
 import '../../habits/providers/habits_provider.dart';
 import '../widgets/habit_grid_card.dart';
 import '../../../core/theme/app_theme.dart';
@@ -45,6 +46,16 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     _buildSummaryCard(context, done, items.length),
                     _buildGrid(context, ref, items, actions, selectedDate),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                      child: Text(
+                        'กดค้างที่การ์ดเพื่อแก้ไข พักไว้ หรือลบ',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                      ),
+                    ),
                     const SizedBox(height: 100),
                   ],
                 );
@@ -172,6 +183,121 @@ class DashboardScreen extends ConsumerWidget {
     return answer ?? false;
   }
 
+  Future<void> _showHabitMenu(
+    BuildContext context,
+    WidgetRef ref,
+    HabitWithLog item,
+    HabitActions actions,
+  ) async {
+    final habit = item.habit;
+    final color = AppTheme.parseHex(habit.colorHex);
+
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(HabitIcons.fromCode(habit.iconCode),
+                    color: color, size: 20),
+              ),
+              title: Text(
+                habit.name,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('แก้ไข'),
+              onTap: () => Navigator.pop(sheetContext, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.pause_circle_outline),
+              title: const Text('พักไว้ก่อน'),
+              subtitle: const Text('เอาออกจากหน้าหลัก คะแนนเดิมไม่หาย'),
+              onTap: () => Navigator.pop(sheetContext, 'pause'),
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline,
+                  color: Theme.of(sheetContext).colorScheme.error),
+              title: Text(
+                'ลบถาวร',
+                style:
+                    TextStyle(color: Theme.of(sheetContext).colorScheme.error),
+              ),
+              subtitle: const Text('ประวัติและคะแนนของ Habit นี้จะหายไปด้วย'),
+              onTap: () => Navigator.pop(sheetContext, 'delete'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (!context.mounted || choice == null) return;
+
+    switch (choice) {
+      case 'edit':
+        context.push('/habits/edit', extra: habit);
+      case 'pause':
+        await actions.setHabitActive(habit.id, false);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('พัก "${habit.name}" ไว้แล้ว'),
+          action: SnackBarAction(
+            label: 'เลิกพัก',
+            onPressed: () => actions.setHabitActive(habit.id, true),
+          ),
+        ));
+      case 'delete':
+        final confirmed = await _confirmDelete(context, habit.name);
+        if (!confirmed || !context.mounted) return;
+        await actions.deleteHabit(habit.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ลบ "${habit.name}" แล้ว')),
+        );
+    }
+  }
+
+  Future<bool> _confirmDelete(BuildContext context, String name) async {
+    final answer = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('ลบถาวร?'),
+        content: Text(
+          'ลบ "$name" พร้อมประวัติการทำทั้งหมด\n'
+          'คะแนนที่เคยได้จาก Habit นี้จะถูกหักออก และกู้คืนไม่ได้\n\n'
+          'ถ้าอยากแค่เอาออกจากหน้าหลัก ให้เลือก "พักไว้ก่อน" แทน',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('ยกเลิก'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('ลบถาวร'),
+          ),
+        ],
+      ),
+    );
+    return answer ?? false;
+  }
+
   Widget _buildGrid(
     BuildContext context,
     WidgetRef ref,
@@ -206,6 +332,7 @@ class DashboardScreen extends ConsumerWidget {
                 _onToggle(context, actions, item, selectedDate),
             onNumericTap: () =>
                 _showNumericDialog(context, ref, item, actions, selectedDate),
+            onMenu: () => _showHabitMenu(context, ref, item, actions),
           );
         },
       ),
